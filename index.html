@@ -339,21 +339,32 @@
             } else { alert("Şifre yanlış!"); }
         }
 
-        function oyunuBaslat() {
-            const paths = document.querySelectorAll('#turkiye-svg path');
-            paths.forEach(p => {
-                if(p.id) {
-                    sehirListesi.push(p.id);
-                    p.addEventListener('click', () => sehirTiklandi(p));
-                }
-            });
-            yeniSehirSor();
-            const sayac = setInterval(() => {
-                sure--; document.getElementById('timer').innerText = sure;
-                if (sure <= 0) { clearInterval(sayac); oyunBitti(); }
-            }, 1000);
+       function oyunuBaslat() {
+    const paths = document.querySelectorAll('#turkiye-svg path');
+    sehirListesi = []; // Listeyi sıfırla
+    
+    paths.forEach(p => {
+        if(p.id && p.id !== "") {
+            sehirListesi.push(p.id); // Haritada ne yazıyorsa onu listeye ekle
+            p.addEventListener('click', () => sehirTiklandi(p));
         }
+    });
 
+    if(sehirListesi.length > 0) {
+        yeniSehirSor();
+        // Geri sayım sayacını başlat
+        const sayac = setInterval(() => {
+            sure--;
+            document.getElementById('timer').innerText = sure;
+            if (sure <= 0) {
+                clearInterval(sayac);
+                oyunBitti();
+            }
+        }, 1000);
+    } else {
+        alert("Hata: Şehirlerin isimleri (ID) bulunamadı! Lütfen path kodlarını kontrol edin.");
+    }
+}
         function yeniSehirSor() {
             sorulanSehir = sehirListesi[Math.floor(Math.random() * sehirListesi.length)];
             document.getElementById('target-city').innerText = sorulanSehir.toUpperCase();
@@ -383,3 +394,4 @@
     </script>
 </body>
 </html>
+
