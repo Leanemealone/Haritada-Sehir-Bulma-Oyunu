@@ -44,15 +44,16 @@
         #header { height: 15%; background: var(--ana-renk); color: white; display: flex; justify-content: space-around; align-items: center; font-size: 1.2rem; }
         #target-city { background: white; color: #d32f2f; padding: 5px 20px; border-radius: 25px; font-weight: bold; }
 
-        #map-container { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        svg { width: 95%; height: 95%; max-height: 80vh; }
+        #map-container { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; }
+        svg { width: 100%; height: 100%; max-height: 80vh; }
         
-        path { fill: #ffffff; stroke: #455a64; stroke-width: 0.6; transition: 0.2s; cursor: pointer; }
-        path:hover { fill: #fff176 !important; }
+        /* Şehir Çizim Stilleri */
+        path { fill: #ffffff; stroke: #455a64; stroke-width: 1; transition: 0.2s; cursor: pointer; }
+        path:hover { fill: #fff176 !important; stroke-width: 2; }
         .dogru { fill: #4caf50 !important; }
         .yanlis { fill: #f44336 !important; }
 
-        #feedback { position: absolute; top: 5%; left: 50%; transform: translateX(-50%); font-size: 2rem; font-weight: bold; z-index: 100; pointer-events: none; }
+        #feedback { position: absolute; top: 5%; left: 50%; transform: translateX(-50%); font-size: 2rem; font-weight: bold; z-index: 100; pointer-events: none; text-align: center; }
     </style>
 </head>
 <body>
@@ -83,7 +84,8 @@
         </div>
         <div id="map-container">
             <div id="feedback"></div>
-            <svg id="turkiye-svg" viewBox="0 0 1100 500" xmlns="http://www.w3.org/2000/svg"></svg>
+            <svg id="turkiye-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1010 440" xml:space="preserve">
+                </svg>
         </div>
     </div>
 
@@ -108,7 +110,13 @@
         let sure = 60;
         let sorulanSehir = "";
         let sehirListesi = [];
-        let haritaYuklendi = false;
+
+        // Senin bulduğun dosyadaki verileri buraya dizi olarak ekledim (Kısa örnek, hepsini ekleyebilirsin)
+        const haritaVerileri = [
+            {id: "Adana", d: "M 622.7,357.7 L 622.6,358.3 ..."}, // Buraya senin dosyadaki 'd' verileri gelecek
+            // Bulduğun dosyadaki tüm <path> etiketlerini bu formatta buraya kopyalayabiliriz
+            // VEYA daha kolayı: Dosyadaki tüm <path> etiketlerini direkt SVG içine yapıştırabiliriz.
+        ];
 
         // SKORLARI YÜKLE (TOP 20)
         async function skorlariYukle() {
@@ -122,78 +130,27 @@
                     lbList.innerHTML += `<div class="lb-row"><span>${sira}. ${d.ad}</span> <b>${d.puan}</b></div>`;
                     sira++;
                 });
-            } catch (e) { lbList.innerHTML = "Skorlar alınamadı."; }
+            } catch (e) { lbList.innerHTML = "Skorlar yüklenemedi."; }
         }
-
-        // HARİTAYI YÜKLE
-        async function haritayiHazirla() {
-    try {
-        const res = await fetch('./tr.json');
-        const data = await res.json();
-        const svg = document.getElementById('turkiye-svg');
-
-        // GeoJSON yapısında şehirler 'features' içindedir
-        const sehirVerisi = data.features; 
-
-        if (!sehirVerisi || sehirVerisi.length === 0) {
-            console.error("Hata: GeoJSON formatı uyumsuz!");
-            return;
-        }
-
-        sehirVerisi.forEach(feature => {
-            // Şehir ismini al (JSON içindeki 'name' veya 'properties.name' kısmına göre)
-            // Senin JSON'unda properties içinde 'name' veya 'id' olabilir, kontrol et:
-            const sehirAdi = feature.properties.name || feature.properties.AD || feature.id;
-            
-            sehirListesi.push(sehirAdi);
-
-            // Koordinatları SVG Path komutuna çeviren basit bir dönüştürücü
-            // Not: GeoJSON koordinatları (long, lat) sırasındadır.
-            let dPath = "";
-            const coords = feature.geometry.coordinates[0];
-            
-            coords.forEach((coord, index) => {
-                // Türkiye koordinatlarını SVG ekranına (1100x500) sığdırmak için oranlama
-                // Bu sayılar koordinatları ekrana sığdırmak için denklemdir
-                const x = (coord[0] - 25) * 50; 
-                const y = (42 - coord[1]) * 60;
-                dPath += (index === 0 ? "M" : "L") + x + "," + y + " ";
-            });
-            dPath += "Z";
-
-            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path.setAttribute("d", dPath);
-            path.setAttribute("id", sehirAdi);
-            path.addEventListener('click', () => sehirTiklandi(path));
-            svg.appendChild(path);
-        });
-
-        haritaYuklendi = true;
-        console.log("Harita Çizildi! Şehir sayısı:", sehirListesi.length);
-    } catch (err) {
-        console.error("Harita yüklenemedi:", err);
-    }
-}
 
         // GİRİŞ
         async function loginCheck() {
-            if(!haritaYuklendi) {
-                alert("Harita henüz yükleniyor, lütfen bekleyin...");
-                return;
-            }
             const sifre = document.getElementById('student-pass').value;
             if(!sifre) return;
-
             const doc = await db.collection("ogrenciler").doc(sifre).get();
             if (doc.exists) {
                 aktifOgrenci = { id: sifre, ...doc.data() };
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('game-area').style.display = 'flex';
                 oyunuBaslat();
-            } else { alert("Şifre hatalı! Lütfen öğretmeninize danışın."); }
+            } else { alert("Şifre hatalı!"); }
         }
 
         function oyunuBaslat() {
+            // Şehir listesini SVG içindeki pathlerden otomatik çek
+            const paths = document.querySelectorAll('path');
+            paths.forEach(p => { if(p.id) sehirListesi.push(p.id); });
+            
             yeniSehirSor();
             const sayac = setInterval(() => {
                 sure--;
@@ -203,7 +160,6 @@
         }
 
         function yeniSehirSor() {
-            if(sehirListesi.length === 0) return;
             sorulanSehir = sehirListesi[Math.floor(Math.random() * sehirListesi.length)];
             document.getElementById('target-city').innerText = sorulanSehir.toUpperCase();
         }
@@ -211,7 +167,6 @@
         function sehirTiklandi(el) {
             if (sure <= 0) return;
             const fb = document.getElementById('feedback');
-            
             if (el.id === sorulanSehir) {
                 puan += 10;
                 document.getElementById('score').innerText = puan;
@@ -230,17 +185,10 @@
         function oyunBitti() {
             const rekorPuan = Math.max(puan, aktifOgrenci.puan || 0);
             db.collection("ogrenciler").doc(aktifOgrenci.id).update({ puan: rekorPuan })
-            .then(() => {
-                alert("Süre doldu! Skorun: " + puan);
-                location.reload();
-            });
+            .then(() => { alert("Süre doldu! Skorun: " + puan); location.reload(); });
         }
 
-        window.onload = () => {
-            haritayiHazirla();
-            skorlariYukle();
-        };
+        window.onload = skorlariYukle;
     </script>
 </body>
 </html>
-
