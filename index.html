@@ -16,6 +16,18 @@
             flex-direction: column; justify-content: center; align-items: center; text-align: center; 
         }
 
+        path {
+    fill: #ffffff; /* Şehirlerin içi beyaz olsun */
+    stroke: #2c3e50; /* Sınır çizgileri koyu gri olsun */
+    stroke-width: 1;
+    transition: fill 0.3s;
+}
+path:hover {
+    fill: #ffeb3b !important; /* Fareyle üzerine gelince sarı olsun */
+}
+.dogru { fill: #4caf50 !important; } /* Doğru cevap yeşil */
+.yanlis { fill: #f44336 !important; } /* Yanlış cevap kırmızı */
+
         @media screen and (orientation: portrait) {
             #rotate-warning { display: flex; }
             #game-area, #login-screen { display: none; }
@@ -71,7 +83,7 @@
         </div>
         <div id="map-container">
             <div id="feedback"></div>
-            <svg id="turkiye-svg" viewBox="0 0 1010 440" xmlns="http://www.w3.org/2000/svg">
+            <svg id="turkiye-svg" viewBox="0 0 1010 440" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
                 </svg>
         </div>
     </div>
@@ -407,10 +419,18 @@
         }
 
         function yeniSehirSor() {
-            if(sehirListesi.length === 0) return;
-            sorulanSehir = sehirListesi[Math.floor(Math.random() * sehirListesi.length)];
-            document.getElementById('target-city').innerText = sorulanSehir.toUpperCase();
-        }
+    if (sehirListesi.length === 0) {
+        // Eğer liste boşsa path'leri tekrar tara
+        document.querySelectorAll('#turkiye-svg path').forEach(p => {
+            if(p.id) sehirListesi.push(p.id);
+        });
+    }
+    
+    if (sehirListesi.length > 0) {
+        sorulanSehir = sehirListesi[Math.floor(Math.random() * sehirListesi.length)];
+        document.getElementById('target-city').innerText = sorulanSehir.toUpperCase();
+    }
+}
 
         function sehirTiklandi(el) {
             const fb = document.getElementById('feedback');
@@ -439,4 +459,5 @@
     </script>
 </body>
 </html>
+
 
