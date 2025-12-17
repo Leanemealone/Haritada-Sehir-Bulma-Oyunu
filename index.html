@@ -127,28 +127,53 @@
 
         // HARİTAYI YÜKLE
         async function haritayiHazirla() {
-            try {
-                // GitHub Pages uyumu için ./tr.json kullanıldı
-                const res = await fetch('./tr.json');
-                if(!res.ok) throw new Error("JSON bulunamadı");
-                const data = await res.json();
-                const svg = document.getElementById('turkiye-svg');
+    try {
+        const res = await fetch('./tr.json');
+        const data = await res.json();
+        const svg = document.getElementById('turkiye-svg');
 
-                data.forEach(sehir => {
-                    sehirListesi.push(sehir.name);
-                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    path.setAttribute("d", sehir.path);
-                    path.setAttribute("id", sehir.name);
-                    path.addEventListener('click', () => sehirTiklandi(path));
-                    svg.appendChild(path);
-                });
-                haritaYuklendi = true;
-                console.log("Harita hazır!");
-            } catch (err) {
-                console.error("Hata:", err);
-                alert("Harita dosyası (tr.json) yüklenemedi!");
-            }
+        // GeoJSON yapısında şehirler 'features' içindedir
+        const sehirVerisi = data.features; 
+
+        if (!sehirVerisi || sehirVerisi.length === 0) {
+            console.error("Hata: GeoJSON formatı uyumsuz!");
+            return;
         }
+
+        sehirVerisi.forEach(feature => {
+            // Şehir ismini al (JSON içindeki 'name' veya 'properties.name' kısmına göre)
+            // Senin JSON'unda properties içinde 'name' veya 'id' olabilir, kontrol et:
+            const sehirAdi = feature.properties.name || feature.properties.AD || feature.id;
+            
+            sehirListesi.push(sehirAdi);
+
+            // Koordinatları SVG Path komutuna çeviren basit bir dönüştürücü
+            // Not: GeoJSON koordinatları (long, lat) sırasındadır.
+            let dPath = "";
+            const coords = feature.geometry.coordinates[0];
+            
+            coords.forEach((coord, index) => {
+                // Türkiye koordinatlarını SVG ekranına (1100x500) sığdırmak için oranlama
+                // Bu sayılar koordinatları ekrana sığdırmak için denklemdir
+                const x = (coord[0] - 25) * 50; 
+                const y = (42 - coord[1]) * 60;
+                dPath += (index === 0 ? "M" : "L") + x + "," + y + " ";
+            });
+            dPath += "Z";
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", dPath);
+            path.setAttribute("id", sehirAdi);
+            path.addEventListener('click', () => sehirTiklandi(path));
+            svg.appendChild(path);
+        });
+
+        haritaYuklendi = true;
+        console.log("Harita Çizildi! Şehir sayısı:", sehirListesi.length);
+    } catch (err) {
+        console.error("Harita yüklenemedi:", err);
+    }
+}
 
         // GİRİŞ
         async function loginCheck() {
@@ -218,3 +243,4 @@
     </script>
 </body>
 </html>
+
