@@ -123,7 +123,7 @@
 
         async function haritayiHazirla() {
             try {
-                const res = await fetch('tr.json');
+                const res = await fetch('./tr.json');
                 const data = await res.json();
                 const svg = document.getElementById('turkiye-svg');
                 data.forEach(sehir => {
@@ -196,4 +196,5 @@
         skorlariYukle();
     </script>
 </body>
+
 </html>
