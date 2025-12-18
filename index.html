@@ -357,11 +357,17 @@
         };
 
         function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-                document.getElementById('fullscreen-btn').style.display = 'none';
-            }
-        }
+    if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+        document.getElementById('fullscreen-btn').style.display = 'none';
+    } else if (document.documentElement.webkitRequestFullscreen) { /* Apple/Safari için */
+        document.documentElement.webkitRequestFullscreen();
+        document.getElementById('fullscreen-btn').style.display = 'none';
+    } else {
+        // Tam ekran desteklenmiyorsa (iPhone gibi)
+        alert("iPhone'da en iyi deneyim için tarayıcı çubuğundaki 'AA' simgesine basıp 'Araç Çubuğunu Gizle' diyebilirsiniz.");
+    }
+}
 
         async function skorlariYukle() {
     try {
@@ -541,3 +547,4 @@ function oyunuHazirla() {
     </script>
 </body>
 </html>
+
