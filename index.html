@@ -337,13 +337,15 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        let sorulacakSehirler = []; // Kalan şehirleri burada tutacağız
+        
         let aktifOgrenci = null, puan = 0, sure = 120, sorulanSehir = "", sehirListesi = [];
         
         // Balıkesir, İzmir ve İstanbul koordinat düzeltmeleri
         const ozelKonumlar = { 
             "İzmir": { dx: -18, dy: 5 }, 
             "İstanbul": { dx: 0, dy: -8 },
-            "Balıkesir": { dx: 0, dy: 35 } 
+            "Balıkesir": { dx: 0, dy: 60 } 
         };
 
         function toggleFullScreen() {
@@ -431,12 +433,24 @@
         }
 
         function yeniSehirSor() { 
-            if(sehirListesi.length === 0) return;
-            sorulanSehir = sehirListesi[Math.floor(Math.random() * sehirListesi.length)];
-            // TÜRKÇE KARAKTER DÜZELTMESI BURADA:
-            const turkceBuyuk = sorulanSehir.toLocaleUpperCase('tr-TR');
-            document.getElementById('target-city').innerText = turkceBuyuk;
-        }
+    // Eğer sorulacak şehir kalmadıysa veya oyun yeni başlıyorsa listeyi yenile
+    if (sorulacakSehirler.length === 0) {
+        sorulacakSehirler = [...sehirListesi]; // Tüm şehirleri kopyala
+    }
+    
+    // Listeden rastgele bir şehir seç
+    const rastgeleIndeks = Math.floor(Math.random() * sorulacakSehirler.length);
+    sorulanSehir = sorulacakSehirler[rastgeleIndeks];
+    
+    // SEÇİLEN ŞEHRİ LİSTEDEN SİL (Bir daha çıkmaması için)
+    sorulacakSehirler.splice(rastgeleIndeks, 1);
+    
+    // Türkçe karakter uyumlu büyük harf yap ve ekrana yaz
+    const turkceBuyuk = sorulanSehir.toLocaleUpperCase('tr-TR');
+    document.getElementById('target-city').innerText = turkceBuyuk;
+
+    console.log("Kalan şehir sayısı: " + sorulacakSehirler.length); // Kontrol için
+}
 
         function sehirTiklandi(el) {
             const fb = document.getElementById('feedback');
@@ -483,5 +497,6 @@
     </script>
 </body>
 </html>
+
 
 
