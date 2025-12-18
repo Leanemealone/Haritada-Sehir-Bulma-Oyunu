@@ -3,51 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Süper Gezgin 🌍</title>
+    <title>Süper Gezgin: Türkiye Turu 🌍</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <style>
         :root { --ana-renk: #4caf50; --turuncu: #f57c00; }
         body { margin: 0; font-family: 'Arial', sans-serif; overflow: hidden; background: #e0f7fa; }
         
-        /* Giriş Paneli Sabitlendi */
-        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #ffeb3b; position: fixed; width: 100%; top:0; left:0; z-index: 5000; }
-        .login-card { background: white; padding: 25px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; width: 320px; }
+        /* 📱 YAN ÇEVİRME UYARISI */
+        #rotate-warning { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        @media screen and (orientation: portrait) { #rotate-warning { display: flex; } #game-area, #login-screen { display: none; } }
         
+        /* 🔑 GİRİŞ PANELİ */
+        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #ffeb3b; }
+        .login-card { background: white; padding: 25px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; width: 320px; }
+        #leaderboard { margin-top: 15px; background: #fff3e0; border-radius: 15px; padding: 10px; max-height: 150px; overflow-y: auto; }
+        .lb-row { display: flex; justify-content: space-between; padding: 5px; font-size: 0.8rem; border-bottom: 1px solid #ddd; }
+
+        /* 🎮 OYUN ALANI */
         #game-area { display: none; flex-direction: column; height: 100vh; }
         #header { height: 12%; background: var(--ana-renk); color: white; display: flex; justify-content: space-around; align-items: center; font-size: 1.3rem; font-weight: bold; }
-        #target-city { background: white; color: #d32f2f; padding: 4px 15px; border-radius: 20px; }
+        #target-city { background: white; color: #d32f2f; padding: 5px 20px; border-radius: 20px; }
         #map-container { flex: 1; position: relative; background: #81d4fa; display: flex; justify-content: center; align-items: center; }
         
         svg { width: 98%; height: 98%; }
         path { fill: #fdfdfd; stroke: #455a64; stroke-width: 0.5; cursor: pointer; transition: 0.3s; }
         path:hover { fill: #fff176 !important; }
-        .city-label { font-size: 7px; font-weight: bold; fill: #2c3e50; pointer-events: none; text-anchor: middle; alignment-baseline: middle; }
+        .city-label { font-size: 6px; font-weight: bold; fill: #2c3e50; pointer-events: none; text-anchor: middle; alignment-baseline: middle; }
         .dogru { fill: #4caf50 !important; }
         .yanlis { fill: #f44336 !important; }
-        
         #feedback { position: absolute; top: 10%; width: 100%; text-align: center; font-size: 2rem; font-weight: bold; z-index: 1000; pointer-events: none; }
-        #leaderboard { margin-top: 15px; background: #fff3e0; border-radius: 15px; padding: 10px; max-height: 150px; overflow-y: auto; }
-        .lb-row { display: flex; justify-content: space-between; padding: 5px; font-size: 0.8rem; border-bottom: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
+    <div id="rotate-warning">
+        <h1 style="font-size: 3rem;">📱</h1>
+        <h2>Lütfen telefonunuzu yan çevirin!</h2>
+    </div>
+
     <div id="login-screen">
         <div class="login-card">
-            <h2 style="color: var(--turuncu); margin-bottom:10px;">Süper Gezgin 🌍</h2>
+            <h2 style="color: var(--turuncu);">Süper Gezgin 🌍</h2>
             <input type="text" id="student-pass" placeholder="Şifreniz" style="padding:12px; border-radius:10px; border:2px solid orange; width:80%;">
             <button onclick="loginCheck()" style="margin-top:15px; padding:12px 30px; background:green; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">BAŞLA!</button>
             <div id="leaderboard">
-                <h4 style="margin:5px 0;">🏆 Skorlar</h4>
-                <div id="lb-list">Skorlar yükleniyor...</div>
+                <h4 style="margin:5px 0;">🏆 Skor Tablosu</h4>
+                <div id="lb-list">Yükleniyor...</div>
             </div>
         </div>
     </div>
 
     <div id="game-area">
         <div id="header">
-            <div>📍 <span id="target-city">...</span></div>
+            <div>📍 Bul: <span id="target-city">...</span></div>
             <div>⏱️ <span id="timer">60</span></div>
             <div>🏆 <span id="score">0</span></div>
         </div>
@@ -322,7 +331,6 @@
     </div>
 
     <script>
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDYEMEciQh-5wEYXgRChyX9PA9FCcehVew",
             authDomain: "haritada-sehir-bulma-oyunu.firebaseapp.com",
@@ -331,61 +339,38 @@
             messagingSenderId: "212809269056",
             appId: "1:212809269056:web:d8c7e6e4e6c22e97c344a5"
         };
-
-        // Firebase başlatma hatasını yakala
-        try {
-            firebase.initializeApp(firebaseConfig);
-            var db = firebase.firestore();
-        } catch (e) {
-            console.error("Firebase başlatılamadı:", e);
-        }
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         let aktifOgrenci = null, puan = 0, sure = 60, sorulanSehir = "", sehirListesi = [];
 
         async function skorlariYukle() {
-            const lbList = document.getElementById('lb-list');
             try {
-                if(!db) throw new Error("Firebase engellendi");
-                const snapshot = await db.collection("ogrenciler").orderBy("puan", "desc").limit(20).get();
+                const snapshot = await db.collection("ogrenciler").orderBy("puan", "desc").limit(10).get();
+                const lbList = document.getElementById('lb-list');
                 lbList.innerHTML = "";
                 snapshot.forEach(doc => {
                     const d = doc.data();
                     lbList.innerHTML += `<div class="lb-row"><span>${d.ad || 'İsimsiz'}</span><b>${d.puan || 0}</b></div>`;
                 });
-            } catch (e) { 
-                lbList.innerHTML = "Skorlar tarayıcı tarafından engellendi."; 
-            }
+            } catch (e) { console.log("Skor hatası"); }
         }
 
         async function loginCheck() {
             const sifre = document.getElementById('student-pass').value;
-            if(!sifre) { alert("Lütfen şifre girin!"); return; }
-            
-            try {
-                if(!db) throw new Error("Offline Mode");
-                const doc = await db.collection("ogrenciler").doc(sifre).get();
-                if (doc.exists) {
-                    aktifOgrenci = { id: sifre, ...doc.data() };
-                    baslat();
-                } else { alert("Şifre hatalı!"); }
-            } catch (e) {
-                // Firebase engellendiyse bile öğretmenin girmesi için "misafir" modu
-                aktifOgrenci = { id: sifre, ad: "Gezgin", puan: 0 };
-                baslat();
-            }
+            const doc = await db.collection("ogrenciler").doc(sifre).get();
+            if (doc.exists) {
+                aktifOgrenci = { id: sifre, ...doc.data() };
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('game-area').style.display = 'flex';
+                oyunuHazirla();
+            } else { alert("Şifre yanlış!"); }
         }
 
-        function baslat() {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('game-area').style.display = 'flex';
-            oyunuBaslat();
-        }
-
-        function oyunuBaslat() {
+        function oyunuHazirla() {
             const paths = document.querySelectorAll('#turkiye-svg path');
             const labelsGroup = document.getElementById('labels-grubu');
             sehirListesi = [];
-            labelsGroup.innerHTML = ""; 
 
             paths.forEach(p => {
                 const parentGroup = p.parentElement;
@@ -396,6 +381,7 @@
                     if (!sehirListesi.includes(ilAdi)) sehirListesi.push(ilAdi);
                     p.addEventListener('click', () => sehirTiklandi(p));
 
+                    // Şehir ismini tam üzerine yaz
                     const bbox = p.getBBox();
                     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
                     text.setAttribute("x", bbox.x + bbox.width / 2);
@@ -405,14 +391,11 @@
                     labelsGroup.appendChild(text);
                 }
             });
-
-            if(sehirListesi.length > 0) {
-                yeniSehirSor();
-                const sayac = setInterval(() => {
-                    sure--; document.getElementById('timer').innerText = sure;
-                    if (sure <= 0) { clearInterval(sayac); oyunBitti(); }
-                }, 1000);
-            }
+            yeniSehirSor();
+            const sayac = setInterval(() => {
+                sure--; document.getElementById('timer').innerText = sure;
+                if (sure <= 0) { clearInterval(sayac); oyunBitti(); }
+            }, 1000);
         }
 
         function yeniSehirSor() {
@@ -424,22 +407,20 @@
             const fb = document.getElementById('feedback');
             if (el.id === sorulanSehir) {
                 puan += 10; document.getElementById('score').innerText = puan;
-                fb.innerText = "DOĞRU! ✅"; fb.style.color = "green";
+                fb.innerText = "Aferin doğru cevapladın! ✅"; fb.style.color = "green";
                 el.classList.add('dogru');
                 setTimeout(() => { el.classList.remove('dogru'); fb.innerText = ""; yeniSehirSor(); }, 800);
             } else {
-                fb.innerText = "YANLIŞ! ❌"; fb.style.color = "red";
+                fb.innerText = "Üzgünüm tekrar dene! ❌"; fb.style.color = "red";
                 el.classList.add('yanlis');
                 setTimeout(() => { el.classList.remove('yanlis'); fb.innerText = ""; }, 500);
             }
         }
 
         function oyunBitti() {
-            alert("Puanın: " + puan);
-            if(db && aktifOgrenci.id) {
-                db.collection("ogrenciler").doc(aktifOgrenci.id).update({ puan: puan });
-            }
-            location.reload();
+            const rekor = Math.max(puan, aktifOgrenci.puan || 0);
+            db.collection("ogrenciler").doc(aktifOgrenci.id).update({ puan: rekor })
+            .then(() => { alert("Harika! Puanın: " + puan); location.reload(); });
         }
 
         window.onload = skorlariYukle;
