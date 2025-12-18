@@ -10,17 +10,14 @@
         :root { --ana-renk: #4caf50; --deniz: #81d4fa; }
         body { margin: 0; font-family: 'Arial', sans-serif; overflow: hidden; background: var(--deniz); touch-action: none; }
         
-        /* 📱 YAN ÇEVİRME UYARISI */
         #rotate-warning { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         @media screen and (orientation: portrait) { #rotate-warning { display: flex; } #game-area, #login-screen { display: none; } }
 
-        /* 🔑 GİRİŞ PANELİ */
         #login-screen { position: fixed; inset: 0; background: #ffeb3b; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .login-card { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; width: 320px; }
         #leaderboard { margin-top: 15px; background: #fff3e0; border-radius: 15px; padding: 10px; max-height: 150px; overflow-y: auto; }
         .lb-row { display: flex; justify-content: space-between; padding: 5px; font-size: 0.8rem; border-bottom: 1px solid #ddd; }
 
-        /* 🎮 OYUN ALANI */
         #game-area { display: none; flex-direction: column; height: 100vh; width: 100vw; }
         #header { height: 12vh; background: var(--ana-renk); color: white; display: flex; justify-content: space-around; align-items: center; font-size: 1.2rem; font-weight: bold; }
         #target-city { background: white; color: #d32f2f; padding: 5px 15px; border-radius: 20px; border: 2px solid #d32f2f; }
@@ -47,11 +44,11 @@
     <div id="login-screen">
         <div class="login-card">
             <h2 style="color: #f57c00;">Süper Gezgin 🌍</h2>
-            <input type="text" id="student-pass" placeholder="Şifren" style="padding:12px; width:80%; border:2px solid orange; border-radius:10px;">
-            <button onclick="loginCheck()" style="margin-top:15px; padding:12px 30px; background:green; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;">BAŞLA!</button>
+            <input type="text" id="student-pass" placeholder="Şifren">
+            <button onclick="loginCheck()">BAŞLA!</button>
             <div id="leaderboard">
                 <h4 style="margin:5px 0;">🏆 Skor Tablosu</h4>
-                <div id="lb-list">Skorlar yükleniyor...</div>
+                <div id="lb-list">Yükleniyor...</div>
             </div>
         </div>
     </div>
@@ -346,7 +343,7 @@
 
         let aktifOgrenci = null, puan = 0, sure = 60, sorulanSehir = "", sehirListesi = [];
 
-        // İzmir vb. için düzeltme
+        // İzmir ve İstanbul yerleşimi için hassas ayar
         const ozelKonumlar = { "İzmir": { dx: -18, dy: 5 }, "İstanbul": { dx: 0, dy: -8 } };
 
         async function skorlariYukle() {
@@ -356,59 +353,76 @@
                 lbList.innerHTML = "";
                 snapshot.forEach(doc => {
                     const d = doc.data();
-                    lbList.innerHTML += `<div class="lb-row"><span>${d.ad || 'İsimsiz'}</span><b>${d.puan || 0}</b></div>`;
+                    lbList.innerHTML += `<div class="lb-row"><span>${d.ad || 'Gezgin'}</span><b>${d.puan || 0}</b></div>`;
                 });
-            } catch (e) { document.getElementById('lb-list').innerHTML = "Bağlantı bekleniyor..."; }
+            } catch (e) { document.getElementById('lb-list').innerHTML = "Skorlar yüklenemedi."; }
         }
 
         async function loginCheck() {
-            const sifre = document.getElementById('student-pass').value;
-            if(!sifre) return;
-            const doc = await db.collection("ogrenciler").doc(sifre).get();
-            if (doc.exists) {
-                aktifOgrenci = { id: sifre, ...doc.data() };
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('game-area').style.display = 'flex';
-                oyunuHazirla();
-            } else { alert("Şifre yanlış!"); }
+            const sifre = document.getElementById('student-pass').value.trim();
+            if(!sifre) { alert("Lütfen şifreni yaz!"); return; } // BOŞ ŞİFRE HATASINI ÇÖZER
+
+            try {
+                const doc = await db.collection("ogrenciler").doc(sifre).get();
+                if (doc.exists) {
+                    aktifOgrenci = { id: sifre, ...doc.data() };
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('game-area').style.display = 'flex';
+                    oyunuHazirla();
+                } else { alert("Şifre bulunamadı!"); }
+            } catch (e) { alert("Bağlantı sorunu!"); }
         }
 
         function oyunuHazirla() {
-            const paths = document.querySelectorAll('#sehir-grubu path');
+            // HEM 'path' HEM 'g' içindeki isimleri arayan yeni sistem
+            const sehirParcalari = document.querySelectorAll('#sehir-grubu path, #sehir-grubu g');
             const labelsGroup = document.getElementById('labels-grubu');
             sehirListesi = [];
             labelsGroup.innerHTML = "";
 
-            paths.forEach(p => {
-                const parentGroup = p.parentElement;
-                let ilAdi = p.getAttribute('data-iladi') || p.id || parentGroup.getAttribute('data-iladi');
+            sehirParcalari.forEach(p => {
+                let ilAdi = p.getAttribute('data-iladi') || p.getAttribute('id');
+                
+                if (ilAdi && ilAdi !== "turkiye" && !sehirListesi.includes(ilAdi)) {
+                    // Sadece path etiketlerine tıklama ve ID verelim
+                    if(p.tagName.toLowerCase() === 'path') {
+                        p.id = ilAdi;
+                        sehirListesi.push(ilAdi);
+                        p.addEventListener('pointerdown', () => sehirTiklandi(p));
 
-                if (ilAdi && ilAdi !== "turkiye") {
-                    p.id = ilAdi;
-                    if (!sehirListesi.includes(ilAdi)) sehirListesi.push(ilAdi);
-                    p.addEventListener('pointerdown', () => sehirTiklandi(p));
+                        // İsim Etiketini Yerleştir
+                        const bbox = p.getBBox();
+                        let x = bbox.x + bbox.width / 2;
+                        let y = bbox.y + bbox.height / 2;
+                        if(ozelKonumlar[ilAdi]) { x += ozelKonumlar[ilAdi].dx; y += ozelKonumlar[ilAdi].dy; }
 
-                    const bbox = p.getBBox();
-                    let x = bbox.x + bbox.width / 2;
-                    let y = bbox.y + bbox.height / 2;
-                    if(ozelKonumlar[ilAdi]) { x += ozelKonumlar[ilAdi].dx; y += ozelKonumlar[ilAdi].dy; }
-
-                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    text.setAttribute("x", x); text.setAttribute("y", y);
-                    text.setAttribute("class", "city-label");
-                    text.textContent = ilAdi;
-                    if(bbox.width < 15) text.style.fontSize = "5px";
-                    labelsGroup.appendChild(text);
+                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute("x", x); text.setAttribute("y", y);
+                        text.setAttribute("class", "city-label");
+                        text.textContent = ilAdi;
+                        
+                        // Küçük iller için font ayarı
+                        let fontSize = Math.min(Math.max(bbox.width / 8, 3.5), 8);
+                        text.style.fontSize = fontSize + "px";
+                        
+                        labelsGroup.appendChild(text);
+                    }
                 }
             });
-            yeniSehirSor();
-            const sayac = setInterval(() => {
-                sure--; document.getElementById('timer').innerText = sure;
-                if (sure <= 0) { clearInterval(sayac); oyunBitti(); }
-            }, 1000);
+
+            if(sehirListesi.length > 0) {
+                yeniSehirSor();
+                const sayac = setInterval(() => {
+                    sure--; document.getElementById('timer').innerText = sure;
+                    if (sure <= 0) { clearInterval(sayac); oyunBitti(); }
+                }, 1000);
+            } else {
+                alert("Harita yüklenemedi! Lütfen path verilerini kontrol edin.");
+            }
         }
 
         function yeniSehirSor() {
+            if(sehirListesi.length === 0) return;
             sorulanSehir = sehirListesi[Math.floor(Math.random() * sehirListesi.length)];
             document.getElementById('target-city').innerText = sorulanSehir.toUpperCase();
         }
@@ -428,7 +442,8 @@
         }
 
         function oyunBitti() {
-            db.collection("ogrenciler").doc(aktifOgrenci.id).update({ puan: Math.max(puan, aktifOgrenci.puan || 0) })
+            const rekor = Math.max(puan, aktifOgrenci.puan || 0);
+            db.collection("ogrenciler").doc(aktifOgrenci.id).update({ puan: rekor })
             .then(() => { alert("Harika! Puanın: " + puan); location.reload(); });
         }
 
