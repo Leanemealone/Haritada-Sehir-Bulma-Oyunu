@@ -333,7 +333,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         let aktifOgrenci = null, puan = 0, sure = 120, sorulanSehir = "", sehirListesi = [];
-        const ozelKonumlar = { "İzmir": { dx: -18, dy: 5 }, "İstanbul": { dx: 0, dy: -8 } };
+        const ozelKonumlar = { "İzmir": { dx: -18, dy: 5 }, "İstanbul": { dx: 0, dy: -8 }, "Balıkesir": { dx: -5, dy: 10 } };
 
         function toggleFullScreen() {
             if (!document.fullscreenElement) {
@@ -416,4 +416,5 @@
     </script>
 </body>
 </html>
+
 
