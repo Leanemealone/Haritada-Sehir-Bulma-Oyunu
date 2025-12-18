@@ -379,35 +379,48 @@
         }
 
         function oyunuHazirla() {
-            const sehirGruplari = document.querySelectorAll('#sehir-grubu g[data-iladi]');
-            const labelsGroup = document.getElementById('labels-grubu');
-            sehirListesi = [];
-            labelsGroup.innerHTML = "";
+    const sehirGruplari = document.querySelectorAll('#sehir-grubu g[data-iladi]');
+    const labelsGroup = document.getElementById('labels-grubu');
+    sehirListesi = [];
+    labelsGroup.innerHTML = "";
 
-            sehirGruplari.forEach(g => {
-                const ilAdi = g.getAttribute('data-iladi');
-                const path = g.querySelector('path');
-                if (ilAdi && path) {
-                    path.id = ilAdi;
-                    if(!sehirListesi.includes(ilAdi)) sehirListesi.push(ilAdi);
-                    path.addEventListener('pointerdown', () => sehirTiklandi(path));
-                    
-                    const bbox = path.getBBox();
-                    let x = bbox.x + bbox.width / 2; 
-                    let y = bbox.y + bbox.height / 2;
-                    
-                    if(ozelKonumlar[ilAdi]) { 
-                        x += ozelKonumlar[ilAdi].dx; 
-                        y += ozelKonumlar[ilAdi].dy; 
-                    }
-                    
-                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    text.setAttribute("x", x); 
-                    text.setAttribute("y", y);
-                    text.setAttribute("class", "city-label"); 
-                    text.textContent = ilAdi;
-                    labelsGroup.appendChild(text);
-                }
+    sehirGruplari.forEach(g => {
+        const ilAdi = g.getAttribute('data-iladi');
+        // Gruptaki TÜM path'leri bul ve hepsine tıklama özelliği ekle
+        const paths = g.querySelectorAll('path');
+        
+        if (ilAdi && paths.length > 0) {
+            if(!sehirListesi.includes(ilAdi)) sehirListesi.push(ilAdi);
+            
+            paths.forEach(p => {
+                p.id = ilAdi;
+                // 'pointerdown' yerine 'pointerup' veya 'click' deniyoruz
+                p.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation(); // Diğer tıklamalarla karışmasın
+                    sehirTiklandi(p);
+                });
+            });
+
+            // Balıkesir yazısının yerini ayarlama
+            const anaPath = paths[0]; // İlk parça üzerinden merkez hesapla
+            const bbox = anaPath.getBBox();
+            let x = bbox.x + bbox.width / 2; 
+            let y = bbox.y + bbox.height / 2;
+            
+            if(ozelKonumlar[ilAdi]) { 
+                x += ozelKonumlar[ilAdi].dx; 
+                y += ozelKonumlar[ilAdi].dy; 
+            }
+            
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", x); 
+            text.setAttribute("y", y);
+            text.setAttribute("class", "city-label"); 
+            // ÇOK ÖNEMLİ: Yazının tıklamayı engellemesini önler
+            text.setAttribute("pointer-events", "none"); 
+            text.textContent = ilAdi;
+            labelsGroup.appendChild(text);
+        }
             });
             yeniSehirSor();
             const sayac = setInterval(() => { 
@@ -470,4 +483,5 @@
     </script>
 </body>
 </html>
+
 
