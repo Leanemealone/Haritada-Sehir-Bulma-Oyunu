@@ -13,8 +13,7 @@
         
         #fullscreen-btn { position: fixed; top: 10px; right: 10px; z-index: 10000; padding: 10px; background: #ff5722; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: none; }
         #rotate-warning { display: none; position: fixed; inset: 0; background: #2c3e50; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        @media screen and (orientation: portrait) { #rotate-warning { display: flex; } #game-area, #login-screen { display: none; } }
-        
+               
         #login-screen { position: fixed; inset: 0; background: #ffeb3b; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .login-card { background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; width: 320px; max-height: 85vh; overflow-y: auto; position: relative; top: -10px; }
         #leaderboard { margin-top: 10px; background: #fff3e0; border-radius: 15px; padding: 8px; max-height: 80px; overflow-y: auto; }
@@ -401,25 +400,50 @@
 }
 
         async function loginCheck() {
-    const secilenId = document.getElementById('student-select').value; // Seçilen öğrencinin ID'si
-    const girilenSifre = document.getElementById('student-pass').value.trim(); // Girilen şifre
+    const secilenId = document.getElementById('student-select').value;
+    const girilenSifre = document.getElementById('student-pass').value.trim();
 
-    if (!secilenId) {
-        alert("Lütfen listeden adını seç!");
-        return;
-    }
+    if (!secilenId) { alert("Lütfen önce listeden adını seç!"); return; }
 
-    // Mantık: Firebase'deki döküman ID'si ile girilen şifre aynı mı?
     if (secilenId === girilenSifre) {
         const doc = await db.collection("ogrenciler").doc(secilenId).get();
         aktifOgrenci = { id: secilenId, ...doc.data() }; 
-        document.getElementById('login-screen').style.display = 'none'; 
-        document.getElementById('game-area').style.display = 'flex'; 
-        document.getElementById('fullscreen-btn').style.display = 'block';
-        oyunuHazirla(); 
+        
+        // Giriş başarılı, şimdi yön kontrolü yapalım
+        yonKontrolEt();
     } else { 
-        alert("Şifre hatalı, lütfen tekrar dene!"); 
+        alert("Şifre yanlış!"); 
     }
+}
+
+// Yeni bir fonksiyon ekliyoruz:
+function yonKontrolEt() {
+    if (window.innerHeight > window.innerWidth) {
+        // Telefon dikey tutuluyorsa uyarıyı göster
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('rotate-warning').style.display = 'flex';
+        
+        // Telefonun dönmesini bekleyen dinleyici
+        window.addEventListener('resize', checkAfterRotate);
+    } else {
+        // Zaten yan tutuluyorsa direkt oyunu başlat
+        oyunuBaslat();
+    }
+}
+
+function checkAfterRotate() {
+    if (window.innerWidth > window.innerHeight) {
+        window.removeEventListener('resize', checkAfterRotate);
+        oyunuBaslat();
+    }
+}
+
+function oyunuBaslat() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('rotate-warning').style.display = 'none';
+    document.getElementById('game-area').style.display = 'flex';
+    document.getElementById('fullscreen-btn').style.display = 'block';
+    oyunuHazirla();
 }
 function oyunuHazirla() {
     const sehirGruplari = document.querySelectorAll('#sehir-grubu g[data-iladi]');
@@ -554,6 +578,7 @@ function oyunuHazirla() {
     </script>
 </body>
 </html>
+
 
 
 
