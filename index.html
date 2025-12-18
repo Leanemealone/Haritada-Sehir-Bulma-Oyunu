@@ -371,26 +371,33 @@
 
         async function skorlariYukle() {
     try {
-        const snapshot = await db.collection("ogrenciler").orderBy("ad", "asc").get();
+        // 1. Liderlik Tablosu İçin: Puanı en yüksek 10 kişiyi getir
+        const skorSnapshot = await db.collection("ogrenciler").orderBy("puan", "desc").limit(10).get();
         const lbList = document.getElementById('lb-list'); 
+        lbList.innerHTML = "";
+        
+        skorSnapshot.forEach(doc => { 
+            const d = doc.data(); 
+            lbList.innerHTML += `<div class="lb-row"><span>${d.ad || 'Gezgin'}</span><b>${d.puan || 0}</b></div>`; 
+        });
+
+        // 2. Açılır Liste İçin: Tüm öğrencileri alfabetik (A-Z) getir
+        const isimSnapshot = await db.collection("ogrenciler").orderBy("ad", "asc").get();
         const studentSelect = document.getElementById('student-select');
         
-        lbList.innerHTML = "";
-        // Select listesini temizle (ilk seçenek hariç)
-        studentSelect.innerHTML = '<option value="">Adını Seç...</option>';
-
-        snapshot.forEach(doc => { 
-            const d = doc.data(); 
-            // 1. Liderlik Tablosu (Skora göre değil, tüm isimleri yüklerken puanları gösterir)
-            lbList.innerHTML += `<div class="lb-row"><span>${d.ad}</span><b>${d.puan || 0}</b></div>`; 
-            
-            // 2. AÇILIR LİSTEYE İSİMLERİ EKLE (ID olarak döküman ID'sini kullanır)
-            const option = document.createElement("option");
-            option.value = doc.id; // Firebase'deki döküman ID'si (şifre)
-            option.textContent = d.ad;
-            studentSelect.appendChild(option);
-        });
-    } catch (e) { console.log("Veri yükleme hatası: " + e); }
+        if(studentSelect) {
+            studentSelect.innerHTML = '<option value="">Adını Seç...</option>';
+            isimSnapshot.forEach(doc => {
+                const d = doc.data();
+                const option = document.createElement("option");
+                option.value = doc.id; 
+                option.textContent = d.ad;
+                studentSelect.appendChild(option);
+            });
+        }
+    } catch (e) { 
+        console.log("Veri yükleme hatası: ", e); 
+    }
 }
 
         async function loginCheck() {
@@ -547,5 +554,6 @@ function oyunuHazirla() {
     </script>
 </body>
 </html>
+
 
 
