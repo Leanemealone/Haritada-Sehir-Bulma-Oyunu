@@ -356,6 +356,11 @@
             "Balıkesir": { dx: 5, dy: 60 } 
         };
 
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                document.getElementById('fullscreen-btn').style.display = 'none';
+            }
         }
 
         async function skorlariYukle() {
@@ -536,16 +541,3 @@ function oyunuHazirla() {
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
