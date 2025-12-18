@@ -9,39 +9,54 @@
     <style>
         :root { --ana-renk: #4caf50; --deniz: #81d4fa; }
         body { margin: 0; font-family: 'Arial', sans-serif; overflow: hidden; background: var(--deniz); touch-action: none; }
-        #rotate-warning { display: none; position: fixed; inset: 0; background: #2c3e50; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        
+        /* Tam Ekran Butonu */
+        #fullscreen-btn { position: fixed; top: 10px; right: 10px; z-index: 10000; padding: 10px; background: #ff5722; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: none; }
+
+        #rotate-warning { display: none; position: fixed; inset: 0; background: #2c3e50; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         @media screen and (orientation: portrait) { #rotate-warning { display: flex; } #game-area, #login-screen { display: none; } }
+        
         #login-screen { position: fixed; inset: 0; background: #ffeb3b; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .login-card { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; width: 320px; }
         #leaderboard { margin-top: 15px; background: #fff3e0; border-radius: 15px; padding: 10px; max-height: 150px; overflow-y: auto; }
         .lb-row { display: flex; justify-content: space-between; padding: 5px; font-size: 0.8rem; border-bottom: 1px solid #ddd; }
-        #game-area { display: none; flex-direction: column; height: 100vh; }
-        #header { height: 12vh; background: var(--ana-renk); color: white; display: flex; justify-content: space-around; align-items: center; font-size: 1.2rem; font-weight: bold; border-bottom: 4px solid #388e3c; }
-        #target-city { background: white; color: #d32f2f; padding: 5px 15px; border-radius: 20px; border: 2px solid #d32f2f; }
-        #map-container { height: 88vh; width: 100vw; display: flex; justify-content: center; align-items: center; padding: 5px; box-sizing: border-box; position: relative; }
+
+        /* YAN PANEL TASARIMI */
+        #game-area { display: none; flex-direction: row; height: 100vh; width: 100vw; }
+        #sidebar { width: 20%; background: var(--ana-renk); color: white; display: flex; flex-direction: column; justify-content: space-around; align-items: center; padding: 10px; border-right: 5px solid #388e3c; }
+        #target-city { background: white; color: #d32f2f; padding: 10px; border-radius: 15px; border: 3px solid #d32f2f; font-size: 1.2rem; width: 90%; text-align: center; }
+
+        #map-container { width: 80%; height: 100vh; display: flex; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; position: relative; }
         svg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; }
         path { fill: #ffffff; stroke: #2c3e50; stroke-width: 0.6; transition: 0.3s; cursor: pointer; }
         .city-label { font-size: 8px; font-weight: bold; fill: #000; pointer-events: none; text-anchor: middle; paint-order: stroke; stroke: #ffffff; stroke-width: 2px; }
         .dogru { fill: #4caf50 !important; }
         .yanlis { fill: #f44336 !important; }
-        #feedback { position: absolute; top: 15%; width: 100%; text-align: center; font-size: 2rem; font-weight: bold; z-index: 1000; pointer-events: none; }
+        #feedback { position: absolute; top: 10%; width: 100%; text-align: center; font-size: 2rem; font-weight: bold; z-index: 1000; pointer-events: none; }
     </style>
 </head>
 <body>
-    <div id="rotate-warning"><h1>📱</h1><h2>Lütfen telefonunuzu yan çevirin!</h2></div>
+    <button id="fullscreen-btn" onclick="toggleFullScreen()">TAM EKRAN YAP</button>
+    <div id="rotate-warning"><h1>📱</h1><h2>Lütfen telefonu yan çevirin!</h2></div>
     
     <div id="login-screen">
         <div class="login-card">
             <h2 style="color: #f57c00;">Süper Gezgin 🌍</h2>
-            <input type="text" id="student-pass" placeholder="Şifren">
-            <button onclick="loginCheck()">BAŞLA!</button>
-            <div id="leaderboard"><div id="lb-list">Yükleniyor...</div></div>
+            <input type="text" id="student-pass" placeholder="Şifren" style="padding:10px; border-radius:10px; border:2px solid orange; width:80%;">
+            <button onclick="loginCheck()" style="margin-top:10px; padding:10px 30px; background:green; color:white; border:none; border-radius:12px; font-weight:bold;">BAŞLA!</button>
+            <div id="leaderboard"><div id="lb-list">Skorlar yükleniyor...</div></div>
         </div>
     </div>
 
     <div id="game-area">
-        <div id="header"><div>📍 Bul: <span id="target-city">...</span></div><div>⏱️ <span id="timer">120</span></div><div>🏆 <span id="score">0</span></div></div>
-        <div id="map-container"><div id="feedback"></div>
+        <div id="sidebar">
+            <div style="font-size:0.9rem;">📍 HEDEF ŞEHİR</div>
+            <div id="target-city">...</div>
+            <div style="font-size:1.5rem;">⏱️ <span id="timer">120</span></div>
+            <div style="font-size:1.5rem;">🏆 <span id="score">0</span></div>
+        </div>
+        <div id="map-container">
+            <div id="feedback"></div>
             <svg id="turkiye-svg" viewBox="0 0 1010 500" preserveAspectRatio="xMidYMid meet">
                 <g id="sehir-grubu">
                     <g id="adana" data-plakakodu="01" data-alankodu="322" data-iladi="Adana">
@@ -310,22 +325,29 @@
         </div>
     </div>
 
-    <audio id="snd-dogru" src="success.mp3"></audio>
-    <audio id="snd-yanlis" src="error.mp3"></audio>
+    <audio id="snd-dogru" src="aferin.mp3"></audio>
+    <audio id="snd-yanlis" src="tekrar.mp3"></audio>
 
     <script>
         const firebaseConfig = { apiKey: "AIzaSyDYEMEciQh-5wEYXgRChyX9PA9FCcehVew", authDomain: "haritada-sehir-bulma-oyunu.firebaseapp.com", projectId: "haritada-sehir-bulma-oyunu", storageBucket: "haritada-sehir-bulma-oyunu.firebasestorage.app", messagingSenderId: "212809269056", appId: "1:212809269056:web:d8c7e6e4e6c22e97c344a5" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        let aktifOgrenci = null, puan = 0, sure = 60, sorulanSehir = "", sehirListesi = [];
+        let aktifOgrenci = null, puan = 0, sure = 120, sorulanSehir = "", sehirListesi = [];
         const ozelKonumlar = { "İzmir": { dx: -18, dy: 5 }, "İstanbul": { dx: 0, dy: -8 } };
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                document.getElementById('fullscreen-btn').style.display = 'none';
+            }
+        }
 
         async function skorlariYukle() {
             try {
                 const snapshot = await db.collection("ogrenciler").orderBy("puan", "desc").limit(10).get();
                 const lbList = document.getElementById('lb-list'); lbList.innerHTML = "";
                 snapshot.forEach(doc => { const d = doc.data(); lbList.innerHTML += `<div class="lb-row"><span>${d.ad || 'Gezgin'}</span><b>${d.puan || 0}</b></div>`; });
-            } catch (e) { document.getElementById('lb-list').innerHTML = "Skorlar alınamadı."; }
+            } catch (e) { }
         }
 
         async function loginCheck() {
@@ -336,6 +358,7 @@
                 aktifOgrenci = { id: sifre, ...doc.data() }; 
                 document.getElementById('login-screen').style.display = 'none'; 
                 document.getElementById('game-area').style.display = 'flex'; 
+                document.getElementById('fullscreen-btn').style.display = 'block';
                 oyunuHazirla(); 
             } else { alert("Şifre yanlış!"); }
         }
@@ -344,7 +367,6 @@
             const sehirGruplari = document.querySelectorAll('#sehir-grubu g[data-iladi]');
             const labelsGroup = document.getElementById('labels-grubu');
             sehirListesi = [];
-            
             sehirGruplari.forEach(g => {
                 const ilAdi = g.getAttribute('data-iladi');
                 const path = g.querySelector('path');
@@ -374,12 +396,12 @@
             const fb = document.getElementById('feedback');
             if (el.id === sorulanSehir) {
                 puan += 10; document.getElementById('score').innerText = puan;
-                fb.innerText = "Aferin doğru cevapladın! ✅"; fb.style.color = "green";
+                fb.innerText = "Aferin! ✅"; fb.style.color = "green";
                 document.getElementById('snd-dogru').play().catch(()=>{});
                 el.classList.add('dogru');
                 setTimeout(() => { el.classList.remove('dogru'); fb.innerText = ""; yeniSehirSor(); }, 800);
             } else {
-                fb.innerText = "Üzgünüm tekrar dene! ❌"; fb.style.color = "red";
+                fb.innerText = "Tekrar Dene! ❌"; fb.style.color = "red";
                 document.getElementById('snd-yanlis').play().catch(()=>{});
                 el.classList.add('yanlis');
                 setTimeout(() => { el.classList.remove('yanlis'); fb.innerText = ""; }, 500);
@@ -394,5 +416,3 @@
     </script>
 </body>
 </html>
-
-
