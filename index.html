@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Süper Gezgin 🌍</title>
+    <title>Süper Gezgin: Türkiye Turu 🌍</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <style>
         :root { --ana-renk: #4caf50; --deniz: #81d4fa; }
         body { margin: 0; font-family: 'Arial', sans-serif; overflow: hidden; background: var(--deniz); touch-action: none; }
         
-        /* Tam Ekran Butonu */
         #fullscreen-btn { position: fixed; top: 10px; right: 10px; z-index: 10000; padding: 10px; background: #ff5722; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: none; }
-
         #rotate-warning { display: none; position: fixed; inset: 0; background: #2c3e50; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         @media screen and (orientation: portrait) { #rotate-warning { display: flex; } #game-area, #login-screen { display: none; } }
         
@@ -21,10 +19,9 @@
         #leaderboard { margin-top: 15px; background: #fff3e0; border-radius: 15px; padding: 10px; max-height: 150px; overflow-y: auto; }
         .lb-row { display: flex; justify-content: space-between; padding: 5px; font-size: 0.8rem; border-bottom: 1px solid #ddd; }
 
-        /* YAN PANEL TASARIMI */
         #game-area { display: none; flex-direction: row; height: 100vh; width: 100vw; }
         #sidebar { width: 20%; background: var(--ana-renk); color: white; display: flex; flex-direction: column; justify-content: space-around; align-items: center; padding: 10px; border-right: 5px solid #388e3c; }
-        #target-city { background: white; color: #d32f2f; padding: 10px; border-radius: 15px; border: 3px solid #d32f2f; font-size: 1.2rem; width: 90%; text-align: center; }
+        #target-city { background: white; color: #d32f2f; padding: 10px; border-radius: 15px; border: 3px solid #d32f2f; font-size: 1.2rem; width: 90%; text-align: center; font-weight: bold;}
 
         #map-container { width: 80%; height: 100vh; display: flex; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box; position: relative; }
         svg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; }
@@ -44,7 +41,7 @@
             <h2 style="color: #f57c00;">Süper Gezgin 🌍</h2>
             <input type="text" id="student-pass" placeholder="Şifren" style="padding:10px; border-radius:10px; border:2px solid orange; width:80%;">
             <button onclick="loginCheck()" style="margin-top:10px; padding:10px 30px; background:green; color:white; border:none; border-radius:12px; font-weight:bold;">BAŞLA!</button>
-            <div id="leaderboard"><div id="lb-list">Skorlar yükleniyor...</div></div>
+            <div id="leaderboard"><div id="lb-list">Yükleniyor...</div></div>
         </div>
     </div>
 
@@ -325,15 +322,29 @@
         </div>
     </div>
 
-    <audio id="snd-dogru" src="success.mp3"></audio>
-    <audio id="snd-yanlis" src="error.mp3"></audio>
+    <audio id="snd-success" src="success.mp3"></audio>
+    <audio id="snd-error" src="error.mp3"></audio>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyDYEMEciQh-5wEYXgRChyX9PA9FCcehVew", authDomain: "haritada-sehir-bulma-oyunu.firebaseapp.com", projectId: "haritada-sehir-bulma-oyunu", storageBucket: "haritada-sehir-bulma-oyunu.firebasestorage.app", messagingSenderId: "212809269056", appId: "1:212809269056:web:d8c7e6e4e6c22e97c344a5" };
+        const firebaseConfig = { 
+            apiKey: "AIzaSyDYEMEciQh-5wEYXgRChyX9PA9FCcehVew", 
+            authDomain: "haritada-sehir-bulma-oyunu.firebaseapp.com", 
+            projectId: "haritada-sehir-bulma-oyunu", 
+            storageBucket: "haritada-sehir-bulma-oyunu.firebasestorage.app", 
+            messagingSenderId: "212809269056", 
+            appId: "1:212809269056:web:d8c7e6e4e6c22e97c344a5" 
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+
         let aktifOgrenci = null, puan = 0, sure = 120, sorulanSehir = "", sehirListesi = [];
-        const ozelKonumlar = { "İzmir": { dx: -18, dy: 5 }, "İstanbul": { dx: 0, dy: -8 }, "Balıkesir": { dx: -5, dy: 10 } };
+        
+        // Balıkesir, İzmir ve İstanbul koordinat düzeltmeleri
+        const ozelKonumlar = { 
+            "İzmir": { dx: -18, dy: 5 }, 
+            "İstanbul": { dx: 0, dy: -8 },
+            "Balıkesir": { dx: -12, dy: 15 } 
+        };
 
         function toggleFullScreen() {
             if (!document.fullscreenElement) {
@@ -345,9 +356,13 @@
         async function skorlariYukle() {
             try {
                 const snapshot = await db.collection("ogrenciler").orderBy("puan", "desc").limit(10).get();
-                const lbList = document.getElementById('lb-list'); lbList.innerHTML = "";
-                snapshot.forEach(doc => { const d = doc.data(); lbList.innerHTML += `<div class="lb-row"><span>${d.ad || 'Gezgin'}</span><b>${d.puan || 0}</b></div>`; });
-            } catch (e) { }
+                const lbList = document.getElementById('lb-list'); 
+                lbList.innerHTML = "";
+                snapshot.forEach(doc => { 
+                    const d = doc.data(); 
+                    lbList.innerHTML += `<div class="lb-row"><span>${d.ad || 'Gezgin'}</span><b>${d.puan || 0}</b></div>`; 
+                });
+            } catch (e) { console.log("Skor yükleme hatası."); }
         }
 
         async function loginCheck() {
@@ -367,65 +382,91 @@
             const sehirGruplari = document.querySelectorAll('#sehir-grubu g[data-iladi]');
             const labelsGroup = document.getElementById('labels-grubu');
             sehirListesi = [];
+            labelsGroup.innerHTML = "";
+
             sehirGruplari.forEach(g => {
                 const ilAdi = g.getAttribute('data-iladi');
                 const path = g.querySelector('path');
                 if (ilAdi && path) {
                     path.id = ilAdi;
-                    sehirListesi.push(ilAdi);
+                    if(!sehirListesi.includes(ilAdi)) sehirListesi.push(ilAdi);
                     path.addEventListener('pointerdown', () => sehirTiklandi(path));
+                    
                     const bbox = path.getBBox();
-                    let x = bbox.x + bbox.width / 2; let y = bbox.y + bbox.height / 2;
-                    if(ozelKonumlar[ilAdi]) { x += ozelKonumlar[ilAdi].dx; y += ozelKonumlar[ilAdi].dy; }
+                    let x = bbox.x + bbox.width / 2; 
+                    let y = bbox.y + bbox.height / 2;
+                    
+                    if(ozelKonumlar[ilAdi]) { 
+                        x += ozelKonumlar[ilAdi].dx; 
+                        y += ozelKonumlar[ilAdi].dy; 
+                    }
+                    
                     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    text.setAttribute("x", x); text.setAttribute("y", y);
-                    text.setAttribute("class", "city-label"); text.textContent = ilAdi;
+                    text.setAttribute("x", x); 
+                    text.setAttribute("y", y);
+                    text.setAttribute("class", "city-label"); 
+                    text.textContent = ilAdi;
                     labelsGroup.appendChild(text);
                 }
             });
             yeniSehirSor();
-            const sayac = setInterval(() => { sure--; document.getElementById('timer').innerText = sure; if (sure <= 0) { clearInterval(sayac); oyunBitti(); } }, 1000);
+            const sayac = setInterval(() => { 
+                sure--; 
+                document.getElementById('timer').innerText = sure; 
+                if (sure <= 0) { clearInterval(sayac); oyunBitti(); } 
+            }, 1000);
         }
 
         function yeniSehirSor() { 
+            if(sehirListesi.length === 0) return;
             sorulanSehir = sehirListesi[Math.floor(Math.random() * sehirListesi.length)];
-            document.getElementById('target-city').innerText = sorulanSehir.toUpperCase();
+            // TÜRKÇE KARAKTER DÜZELTMESI BURADA:
+            const turkceBuyuk = sorulanSehir.toLocaleUpperCase('tr-TR');
+            document.getElementById('target-city').innerText = turkceBuyuk;
         }
 
-        ffunction sehirTiklandi(el) {
-    const fb = document.getElementById('feedback');
-    const successSnd = document.getElementById('snd-success');
-    const errorSnd = document.getElementById('snd-error');
+        function sehirTiklandi(el) {
+            const fb = document.getElementById('feedback');
+            const successSnd = document.getElementById('snd-success');
+            const errorSnd = document.getElementById('snd-error');
 
-    if (el.id === sorulanSehir) {
-        puan += 10; 
-        document.getElementById('score').innerText = puan;
-        fb.innerText = "Aferin doğru cevapladın! ✅"; 
-        fb.style.color = "green";
-        
-        successSnd.play().catch(()=>{}); // Doğru sesi
-        
-        el.classList.add('dogru');
-        setTimeout(() => { el.classList.remove('dogru'); fb.innerText = ""; yeniSehirSor(); }, 800);
-    } else {
-        fb.innerText = "Üzgünüm tekrar dene! ❌"; 
-        fb.style.color = "red";
-        
-        errorSnd.play().catch(()=>{}); // Yanlış sesi
-        
-        el.classList.add('yanlis');
-        setTimeout(() => { el.classList.remove('yanlis'); fb.innerText = ""; }, 500);
-    }
-}
+            if (el.id === sorulanSehir) {
+                puan += 10; 
+                document.getElementById('score').innerText = puan;
+                fb.innerText = "Aferin, doğru cevapladın! ✅"; 
+                fb.style.color = "green";
+                
+                successSnd.play().catch(()=>{}); 
+                
+                el.classList.add('dogru');
+                setTimeout(() => { 
+                    el.classList.remove('dogru'); 
+                    fb.innerText = ""; 
+                    yeniSehirSor(); 
+                }, 800);
+            } else {
+                fb.innerText = "Üzgünüm, tekrar dene! ❌"; 
+                fb.style.color = "red";
+                
+                errorSnd.play().catch(()=>{}); 
+                
+                el.classList.add('yanlis');
+                setTimeout(() => { 
+                    el.classList.remove('yanlis'); 
+                    fb.innerText = ""; 
+                }, 500);
+            }
+        }
 
         function oyunBitti() {
-            db.collection("ogrenciler").doc(aktifOgrenci.id).update({ puan: Math.max(puan, aktifOgrenci.puan || 0) })
-            .then(() => { alert("Süre bitti! Puanın: " + puan); location.reload(); });
+            db.collection("ogrenciler").doc(aktifOgrenci.id).update({ 
+                puan: Math.max(puan, aktifOgrenci.puan || 0) 
+            }).then(() => { 
+                alert("Süre bitti! Puanın: " + puan); 
+                location.reload(); 
+            });
         }
         window.onload = skorlariYukle;
     </script>
 </body>
 </html>
-
-
-
