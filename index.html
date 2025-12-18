@@ -38,13 +38,20 @@
     <div id="rotate-warning"><h1>📱</h1><h2>Lütfen telefonu yan çevirin!</h2></div>
     
     <div id="login-screen">
-        <div class="login-card">
-            <h2 style="color: #f57c00;">Süper Gezgin 🌍</h2>
-            <input type="text" id="student-pass" placeholder="Şifren" style="padding:10px; border-radius:10px; border:2px solid orange; width:80%;">
-            <button onclick="loginCheck()" style="margin-top:10px; padding:10px 30px; background:green; color:white; border:none; border-radius:12px; font-weight:bold;">BAŞLA!</button>
-            <div id="leaderboard"><div id="lb-list">Yükleniyor...</div></div>
-        </div>
+    <div class="login-card">
+        <h2 style="color: #f57c00;">Süper Gezgin 🌍</h2>
+        
+        <select id="student-select" style="padding:10px; border-radius:10px; border:2px solid orange; width:86%; margin-bottom:10px; font-size: 1rem;">
+            <option value="">Adını Seç...</option>
+        </select>
+
+        <input type="password" id="student-pass" placeholder="Şifren" style="padding:10px; border-radius:10px; border:2px solid orange; width:80%;">
+        
+        <button onclick="loginCheck()" style="margin-top:10px; padding:10px 30px; background:green; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;">BAŞLA!</button>
+        
+        <div id="leaderboard"><div id="lb-list">Yükleniyor...</div></div>
     </div>
+</div>
 
     <div id="game-area">
         <div id="sidebar">
@@ -357,29 +364,50 @@
         }
 
         async function skorlariYukle() {
-            try {
-                const snapshot = await db.collection("ogrenciler").orderBy("puan", "desc").limit(10).get();
-                const lbList = document.getElementById('lb-list'); 
-                lbList.innerHTML = "";
-                snapshot.forEach(doc => { 
-                    const d = doc.data(); 
-                    lbList.innerHTML += `<div class="lb-row"><span>${d.ad || 'Gezgin'}</span><b>${d.puan || 0}</b></div>`; 
-                });
-            } catch (e) { console.log("Skor yükleme hatası."); }
-        }
+    try {
+        const snapshot = await db.collection("ogrenciler").orderBy("ad", "asc").get();
+        const lbList = document.getElementById('lb-list'); 
+        const studentSelect = document.getElementById('student-select');
+        
+        lbList.innerHTML = "";
+        // Select listesini temizle (ilk seçenek hariç)
+        studentSelect.innerHTML = '<option value="">Adını Seç...</option>';
+
+        snapshot.forEach(doc => { 
+            const d = doc.data(); 
+            // 1. Liderlik Tablosu (Skora göre değil, tüm isimleri yüklerken puanları gösterir)
+            lbList.innerHTML += `<div class="lb-row"><span>${d.ad}</span><b>${d.puan || 0}</b></div>`; 
+            
+            // 2. AÇILIR LİSTEYE İSİMLERİ EKLE (ID olarak döküman ID'sini kullanır)
+            const option = document.createElement("option");
+            option.value = doc.id; // Firebase'deki döküman ID'si (şifre)
+            option.textContent = d.ad;
+            studentSelect.appendChild(option);
+        });
+    } catch (e) { console.log("Veri yükleme hatası: " + e); }
+}
 
         async function loginCheck() {
-            const sifre = document.getElementById('student-pass').value.trim();
-            if(!sifre) return;
-            const doc = await db.collection("ogrenciler").doc(sifre).get();
-            if (doc.exists) { 
-                aktifOgrenci = { id: sifre, ...doc.data() }; 
-                document.getElementById('login-screen').style.display = 'none'; 
-                document.getElementById('game-area').style.display = 'flex'; 
-                document.getElementById('fullscreen-btn').style.display = 'block';
-                oyunuHazirla(); 
-            } else { alert("Şifre yanlış!"); }
-        }
+    const secilenId = document.getElementById('student-select').value; // Seçilen öğrencinin ID'si
+    const girilenSifre = document.getElementById('student-pass').value.trim(); // Girilen şifre
+
+    if (!secilenId) {
+        alert("Lütfen listeden adını seç!");
+        return;
+    }
+
+    // Mantık: Firebase'deki döküman ID'si ile girilen şifre aynı mı?
+    if (secilenId === girilenSifre) {
+        const doc = await db.collection("ogrenciler").doc(secilenId).get();
+        aktifOgrenci = { id: secilenId, ...doc.data() }; 
+        document.getElementById('login-screen').style.display = 'none'; 
+        document.getElementById('game-area').style.display = 'flex'; 
+        document.getElementById('fullscreen-btn').style.display = 'block';
+        oyunuHazirla(); 
+    } else { 
+        alert("Şifre hatalı, lütfen tekrar dene!"); 
+    }
+}
 function oyunuHazirla() {
     const sehirGruplari = document.querySelectorAll('#sehir-grubu g[data-iladi]');
     const labelsGroup = document.getElementById('labels-grubu');
@@ -513,6 +541,7 @@ function oyunuHazirla() {
     </script>
 </body>
 </html>
+
 
 
 
