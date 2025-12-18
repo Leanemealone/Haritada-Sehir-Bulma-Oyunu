@@ -382,56 +382,34 @@
                 oyunuHazirla(); 
             } else { alert("Şifre yanlış!"); }
         }
-
-        function oyunuHazirla() {
+function oyunuHazirla() {
     const sehirGruplari = document.querySelectorAll('#sehir-grubu g[data-iladi]');
     const labelsGroup = document.getElementById('labels-grubu');
     sehirListesi = [];
     labelsGroup.innerHTML = "";
 
     sehirGruplari.forEach(g => {
-    const ilAdi = g.getAttribute('data-iladi');
-    const paths = g.querySelectorAll('path');
-    
-    if (ilAdi && paths.length > 0) {
-        if(!sehirListesi.includes(ilAdi)) sehirListesi.push(ilAdi);
-
-        // Her şehir grubu (il) için bir kez rastgele renk seçiyoruz
-        const rastgeleRenk = sehirRenkleri[Math.floor(Math.random() * sehirRenkleri.length)];
+        const ilAdi = g.getAttribute('data-iladi');
+        const paths = g.querySelectorAll('path');
         
-        paths.forEach(p => {
-            p.id = ilAdi;
-            p.style.fill = rastgeleRenk; // Şehrin tüm parçalarını aynı renge boya
+        if (ilAdi && paths.length > 0) {
+            if(!sehirListesi.includes(ilAdi)) sehirListesi.push(ilAdi);
+
+            // 1. Renk Seçimi
+            const rastgeleRenk = sehirRenkleri[Math.floor(Math.random() * sehirRenkleri.length)];
             
-            // Tıklama olayını ekle
-            p.addEventListener('pointerdown', (e) => {
-                e.stopPropagation(); // Tıklamanın diğer katmanlara geçmesini engelle
-                sehirTiklandi(p);
-            });
+            // 2. Şehir Boyama ve Tıklama (Döngü burada başlar ve biter)
+            paths.forEach(p => {
+                p.id = ilAdi;
+                p.style.fill = rastgeleRenk; 
+                p.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    sehirTiklandi(p);
+                });
+            }); // <-- Eksik olan kapatma buradaydı!
 
-        // Etiket (İsim) yerleşimi buraya gelecek...
-        const anaPath = paths[0]; 
-        const bbox = anaPath.getBBox();
-        let x = bbox.x + bbox.width / 2; 
-        let y = bbox.y + bbox.height / 2;
-        
-        if(ozelKonumlar[ilAdi]) { 
-            x += ozelKonumlar[ilAdi].dx; 
-            y += ozelKonumlar[ilAdi].dy; 
-        }
-        
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", x); 
-        text.setAttribute("y", y);
-        text.setAttribute("class", "city-label"); 
-        text.setAttribute("pointer-events", "none"); // Yazının tıklamayı engellemesini önler
-        text.textContent = ilAdi;
-        labelsGroup.appendChild(text);
-    }
-});
-
-            // Balıkesir yazısının yerini ayarlama
-            const anaPath = paths[0]; // İlk parça üzerinden merkez hesapla
+            // 3. İsim Yerleşimi ve Balıkesir Ayarı (Sadece 1 kez olmalı)
+            const anaPath = paths[0]; 
             const bbox = anaPath.getBBox();
             let x = bbox.x + bbox.width / 2; 
             let y = bbox.y + bbox.height / 2;
@@ -445,19 +423,25 @@
             text.setAttribute("x", x); 
             text.setAttribute("y", y);
             text.setAttribute("class", "city-label"); 
-            // ÇOK ÖNEMLİ: Yazının tıklamayı engellemesini önler
             text.setAttribute("pointer-events", "none"); 
             text.textContent = ilAdi;
             labelsGroup.appendChild(text);
         }
-            });
-            yeniSehirSor();
-            const sayac = setInterval(() => { 
-                sure--; 
-                document.getElementById('timer').innerText = sure; 
-                if (sure <= 0) { clearInterval(sayac); oyunBitti(); } 
-            }, 1000);
-        }
+    }); // <-- Şehir grupları döngüsü burada biter
+
+    // 4. Oyun Başlangıç Ayarları
+    sorulacakSehirler = [...sehirListesi]; 
+    yeniSehirSor();
+    
+    const sayac = setInterval(() => { 
+        sure--; 
+        document.getElementById('timer').innerText = sure; 
+        if (sure <= 0) { 
+            clearInterval(sayac); 
+            oyunBitti(); 
+        } 
+    }, 1000);
+}
 
         function yeniSehirSor() { 
     // Eğer sorulacak şehir kalmadıysa veya oyun yeni başlıyorsa listeyi yenile
@@ -531,6 +515,7 @@
     </script>
 </body>
 </html>
+
 
 
 
