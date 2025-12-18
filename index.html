@@ -6,6 +6,7 @@
     <title>Süper Gezgin: Türkiye Turu 🌍</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --ana-renk: #4caf50; --deniz: #81d4fa; }
         body { margin: 0; font-family: 'Arial', sans-serif; overflow: hidden; background: var(--deniz); touch-action: none; }
@@ -462,6 +463,13 @@
                 document.getElementById('score').innerText = puan;
                 fb.innerText = "Aferin, doğru cevapladın! ✅"; 
                 fb.style.color = "green";
+
+                confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#ffeb3b', '#4caf50', '#2196f3', '#ff5722']
+        });
                 
                 successSnd.play().catch(()=>{}); 
                 
@@ -497,6 +505,7 @@
     </script>
 </body>
 </html>
+
 
 
 
