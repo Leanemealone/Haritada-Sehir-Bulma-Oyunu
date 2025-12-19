@@ -369,7 +369,7 @@
             } catch (e) { console.error("Yükleme Hatası:", e); }
         }
 
-        async function loginCheck() {
+       async function loginCheck() {
     const studentSelect = document.getElementById('student-select');
     const secilenDocId = studentSelect.value; 
     const girilenSifre = document.getElementById('student-pass').value.trim();
@@ -384,43 +384,44 @@
         if (doc.exists) {
             const data = doc.data();
             
-            // Şifre Karşılaştırma
             if (String(data.sifre).trim() === girilenSifre) {
-                // ŞİFRE DOĞRU
                 aktifOgrenci = { id: secilenDocId, ...data }; 
                 
-                // --- EKRAN YÖNÜ KONTROLÜ (HASSASLAŞTIRILMIŞ) ---
-                if (window.innerHeight > window.innerWidth) {
-                    // Telefon dikeyse uyarıyı göster
+                // --- GELİŞMİŞ YÖN KONTROLÜ BAŞLANGICI ---
+                const ekranYatayMi = () => {
+                    // Yöntem 1: Genişlik kontolü
+                    const boyutYatay = window.innerWidth > window.innerHeight;
+                    // Yöntem 2: Sensör açısı kontrolü (90 veya -90 derece yataydır)
+                    const aciYatay = Math.abs(window.orientation) === 90;
+                    return boyutYatay || aciYatay;
+                };
+
+                if (!ekranYatayMi()) {
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('rotate-warning').style.display = 'flex';
                     
-                    const hızlıKontrol = () => {
-                        // Genişlik yükseklikten büyük olduğu ilk an oyunu başlat
-                        if (window.innerWidth > window.innerHeight) {
-                            window.removeEventListener('resize', hızlıKontrol);
-                            window.removeEventListener('orientationchange', hızlıKontrol);
-                            oyunuGercektenBaslat();
+                    const baslatici = () => {
+                        if (ekranYatayMi()) {
+                            window.removeEventListener('resize', baslatici);
+                            window.removeEventListener('orientationchange', baslatici);
+                            // Ekstra güvenlik: 100ms sonra boyutlar tam otursun
+                            setTimeout(oyunuGercektenBaslat, 100);
                         }
                     };
 
-                    window.addEventListener('resize', hızlıKontrol);
-                    window.addEventListener('orientationchange', hızlıKontrol);
+                    window.addEventListener('resize', baslatici);
+                    window.addEventListener('orientationchange', baslatici);
                 } else {
-                    // Zaten yan tutuluyorsa direkt başlat
                     oyunuGercektenBaslat();
                 }
-                // -----------------------------------------------
+                // --- GELİŞMİŞ YÖN KONTROLÜ BİTİŞİ ---
                 
             } else {
                 alert("Şifre yanlış!");
             }
-        } else {
-            alert("Öğrenci kaydı bulunamadı!");
         }
     } catch (e) {
-        console.error("Hata:", e);
-        alert("Bağlantı hatası oluştu!");
+        alert("Bağlantı hatası!");
     }
 }
 
@@ -555,6 +556,7 @@
 </script>
 </body>
 </html>
+
 
 
 
