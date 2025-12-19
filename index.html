@@ -384,13 +384,25 @@
                         aktifOgrenci = { id: secilenDocId, ...data }; 
                         
                         if (window.innerHeight > window.innerWidth) {
-                            document.getElementById('login-screen').style.display = 'none';
-                            document.getElementById('rotate-warning').style.display = 'flex';
-                            window.addEventListener('resize', function check() {
-                                if (window.innerWidth > window.innerHeight) {
-                                    window.removeEventListener('resize', check);
-                                    oyunuGercektenBaslat();
-                                }
+    // Telefon dikeyse uyarıyı göster
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('rotate-warning').style.display = 'flex';
+    
+    // Hem 'resize' hem de 'orientationchange' olaylarını dinleyelim (Daha hızlı algılar)
+    const hızlıKontrol = () => {
+        // Tolerans ekledik: Genişlik, yükseklikten büyük olduğu an (1 piksel bile olsa) başlat
+        if (window.innerWidth > window.innerHeight) {
+            window.removeEventListener('resize', hızlıKontrol);
+            window.removeEventListener('orientationchange', hızlıKontrol);
+            oyunuGercektenBaslat();
+        }
+    };
+
+    window.addEventListener('resize', hızlıKontrol);
+    window.addEventListener('orientationchange', hızlıKontrol); // Bazı telefonlar bunu daha hızlı tetikler
+} else {
+    oyunuGercektenBaslat();
+}
                             });
                         } else { oyunuGercektenBaslat(); }
                     } else { alert("Şifre yanlış!"); }
@@ -529,5 +541,6 @@
 </script>
 </body>
 </html>
+
 
 
