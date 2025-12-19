@@ -405,8 +405,8 @@
 }
 
 async function loginCheck() {
-    const secilenDocId = document.getElementById('student-select').value; // ogr_alya
-    const girilenSifre = document.getElementById('student-pass').value.trim(); // "2041"
+    const secilenDocId = document.getElementById('student-select').value; 
+    const girilenSifre = document.getElementById('student-pass').value.trim();
 
     if (!secilenDocId) {
         alert("Lütfen önce listeden adını seç!");
@@ -417,17 +417,19 @@ async function loginCheck() {
         const doc = await db.collection("ogrenciler").doc(secilenDocId).get();
         if (doc.exists) {
             const data = doc.data();
-            // ŞİFRE KONTROLÜ: Firebase'deki "sifre" alanı ile karşılaştırır
-          if (String(data.sifre).trim() == String(girilenSifre).trim()) {
-    // Giriş başarılı...
-} else {
-    alert("Hata! Aranan: " + data.sifre + " | Senin Yazdığın: " + girilenSifre);
-}
+            
+            // ŞİFRE KONTROLÜ (Tüm ihtimalleri kapsayan en güvenli yol)
+            const dbSifre = String(data.sifre).trim();
+            const inputSifre = String(girilenSifre).trim();
+
+            if (dbSifre === inputSifre) {
+                aktifOgrenci = { id: secilenDocId, ...data }; 
                 
-                // Yön Kontrolü
+                // Ekran Yönü Kontrolü
                 if (window.innerHeight > window.innerWidth) {
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('rotate-warning').style.display = 'flex';
+                    
                     window.addEventListener('resize', function check() {
                         if (window.innerWidth > window.innerHeight) {
                             window.removeEventListener('resize', check);
@@ -438,12 +440,16 @@ async function loginCheck() {
                     oyunuGercektenBaslat();
                 }
             } else {
-                alert("Girdiğin şifre yanlış! ❌");
+                // Şifre yanlışsa bize neyi karşılaştırdığını söylesin (Hata çözmek için)
+                alert("Şifre Yanlış! \nSistemdeki: " + dbSifre + "\nSenin Yazdığın: " + inputSifre);
             }
+        } else {
+            alert("Öğrenci kaydı bulunamadı!");
         }
     } catch (e) {
-        console.error("Giriş hatası: ", e);
-        alert("Bağlantı hatası!");
+        // İŞTE EKSİK OLAN CATCH BLOĞU BURASI:
+        console.error("Giriş Hatası:", e);
+        alert("Bağlantı sorunu! Lütfen internetini veya tarayıcı izinlerini kontrol et.");
     }
 }
 
@@ -635,6 +641,7 @@ function oyunuHazirla() {
     </script>
 </body>
 </html>
+
 
 
 
