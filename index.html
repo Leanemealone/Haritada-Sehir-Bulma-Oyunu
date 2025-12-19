@@ -370,41 +370,43 @@
 
        async function skorlariYukle() {
     try {
-        // Liderlik Tablosu: Puanı en yüksek 10 kişiyi getir (puan: number olduğu için desc çalışır)
-        const skorSnapshot = await db.collection("ogrenciler").orderBy("puan", "desc").limit(10).get();
         const lbList = document.getElementById('lb-list'); 
+        const studentSelect = document.getElementById('student-select');
+        
+        // 1. Liderlik Tablosu (Puanı en yüksek olanlar)
+        // ÖNEMLİ: Firebase'de 'puan' alanının tüm dökümanlarda olduğundan emin olun.
+        const skorSnapshot = await db.collection("ogrenciler").orderBy("puan", "desc").limit(10).get();
         lbList.innerHTML = "";
         
         skorSnapshot.forEach(doc => { 
             const d = doc.data(); 
-            // Tabloda 'isim' alanındaki String değeri (AHMET EFE) gösteriyoruz
-            lbList.innerHTML += `<div class="lb-row"><span>${d.isim || 'Gezgin'}</span><b>${d.puan || 0}</b></div>`; 
+            // 'd.isim' Firebase'deki 'isim' alanı ile birebir aynı olmalı
+            const gosterilecekAd = d.isim || doc.id;
+            lbList.innerHTML += `<div class="lb-row"><span>${gosterilecekAd}</span><b>${d.puan || 0}</b></div>`; 
         });
 
-        // Açılır Liste: 'isim' alanına göre A-Z sıralama
+        // 2. Açılır Liste (Öğrenci Seçimi)
         const isimSnapshot = await db.collection("ogrenciler").orderBy("isim", "asc").get();
-        const studentSelect = document.getElementById('student-select');
-        
         if(studentSelect) {
             studentSelect.innerHTML = '<option value="">Adını Seç...</option>';
             isimSnapshot.forEach(doc => {
                 const d = doc.data();
                 const option = document.createElement("option");
-                // Value: Document ID (ogr_ahmet efe), Text: isim (AHMET EFE)
-                option.value = doc.id; 
-                option.textContent = d.isim; 
+                option.value = doc.id; // örn: ogr_alya
+                option.textContent = d.isim || doc.id; // örn: ALYA DEMİRAL
                 studentSelect.appendChild(option);
             });
         }
     } catch (e) { 
-        console.log("Veri yükleme hatası: ", e); 
+        console.error("Yükleme Hatası: ", e); 
+        // Eğer hata varsa liderlik tablosunda gösterelim ki anlayalım
+        document.getElementById('lb-list').innerHTML = "Veri çekilemedi!";
     }
 }
 
-// 2. GİRİŞ KONTROLÜ (DOKÜMANI ÇEKİP ŞİFREYİ DOĞRULAYAN KISIM)
 async function loginCheck() {
-    const secilenDocId = document.getElementById('student-select').value; // örn: ogr_ahmet efe
-    const girilenSifre = document.getElementById('student-pass').value.trim(); // örn: 4910
+    const secilenDocId = document.getElementById('student-select').value; // ogr_alya
+    const girilenSifre = document.getElementById('student-pass').value.trim(); // "2041"
 
     if (!secilenDocId) {
         alert("Lütfen önce listeden adını seç!");
@@ -413,18 +415,16 @@ async function loginCheck() {
 
     try {
         const doc = await db.collection("ogrenciler").doc(secilenDocId).get();
-        
         if (doc.exists) {
             const data = doc.data();
-            // String olarak kaydedilen sifre alanını kontrol ediyoruz
-            if (data.sifre === girilenSifre) {
+            // ŞİFRE KONTROLÜ: Firebase'deki "sifre" alanı ile karşılaştırır
+            if (String(data.sifre) === girilenSifre) {
                 aktifOgrenci = { id: secilenDocId, ...data }; 
                 
-                // Telefon Yönü Kontrolü (Dikeyse uyarı verir, yan ise başlatır)
+                // Yön Kontrolü
                 if (window.innerHeight > window.innerWidth) {
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('rotate-warning').style.display = 'flex';
-                    
                     window.addEventListener('resize', function check() {
                         if (window.innerWidth > window.innerHeight) {
                             window.removeEventListener('resize', check);
@@ -435,12 +435,12 @@ async function loginCheck() {
                     oyunuGercektenBaslat();
                 }
             } else {
-                alert("Şifre hatalı! Lütfen tekrar dene. ❌");
+                alert("Girdiğin şifre yanlış! ❌");
             }
         }
     } catch (e) {
-        alert("Veritabanı bağlantısında bir sorun oluştu!");
-        console.error(e);
+        console.error("Giriş hatası: ", e);
+        alert("Bağlantı hatası!");
     }
 }
 
@@ -632,6 +632,7 @@ function oyunuHazirla() {
     </script>
 </body>
 </html>
+
 
 
 
