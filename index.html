@@ -473,12 +473,34 @@
         }
 
         function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(() => {});
-            }
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        // Tam ekran yapma komutu (Farklı tarayıcılar için)
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
         }
+        
+        // KRİTİK NOKTA: Butonu gizle
+        document.getElementById('fullscreen-btn').style.display = 'none';
+    }
+}
 
         window.onload = skorlariYukle;
-    </script>
+       document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            document.getElementById('fullscreen-btn').style.display = 'block';
+        }
+    });
+
+    // Apple / Safari tarayıcıları için takip edici
+    document.addEventListener('webkitfullscreenchange', () => {
+        if (!document.webkitfullscreenElement) {
+            document.getElementById('fullscreen-btn').style.display = 'block';
+        }
+    });
+ 
+</script>
 </body>
 </html>
+
