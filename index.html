@@ -418,14 +418,14 @@ async function loginCheck() {
         if (doc.exists) {
             const data = doc.data();
             
-            // ŞİFRE KONTROLÜ (Tüm ihtimalleri kapsayan en güvenli yol)
+            // ŞİFRE KONTROLÜ (Boşlukları temizleyerek ve String'e çevirerek kontrol eder)
             const dbSifre = String(data.sifre).trim();
             const inputSifre = String(girilenSifre).trim();
 
             if (dbSifre === inputSifre) {
                 aktifOgrenci = { id: secilenDocId, ...data }; 
                 
-                // Ekran Yönü Kontrolü
+                // Ekran Yönü Kontrolü (Dikeyse uyarı verir, yan çevirince başlatır)
                 if (window.innerHeight > window.innerWidth) {
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('rotate-warning').style.display = 'flex';
@@ -440,20 +440,19 @@ async function loginCheck() {
                     oyunuGercektenBaslat();
                 }
             } else {
-                // Şifre yanlışsa bize neyi karşılaştırdığını söylesin (Hata çözmek için)
+                // Şifre yanlışsa bize hem sistemdekini hem yazılanı göstersin
                 alert("Şifre Yanlış! \nSistemdeki: " + dbSifre + "\nSenin Yazdığın: " + inputSifre);
             }
         } else {
             alert("Öğrenci kaydı bulunamadı!");
         }
     } catch (e) {
-        // İŞTE EKSİK OLAN CATCH BLOĞU BURASI:
+        // Syntax hatasını düzelten kritik blok burası:
         console.error("Giriş Hatası:", e);
-        alert("Bağlantı sorunu! Lütfen internetini veya tarayıcı izinlerini kontrol et.");
+        alert("Bağlantı sorunu yaşandı!");
     }
 }
 
-// Oyun Başlatma Yardımcı Fonksiyonu
 function oyunuGercektenBaslat() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('rotate-warning').style.display = 'none';
@@ -641,6 +640,7 @@ function oyunuHazirla() {
     </script>
 </body>
 </html>
+
 
 
 
