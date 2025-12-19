@@ -418,7 +418,11 @@ async function loginCheck() {
         if (doc.exists) {
             const data = doc.data();
             // ŞİFRE KONTROLÜ: Firebase'deki "sifre" alanı ile karşılaştırır
-           if (String(data.sifre).trim() == String(girilenSifre).trim()) {
+          if (String(data.sifre).trim() == String(girilenSifre).trim()) {
+    // Giriş başarılı...
+} else {
+    alert("Hata! Aranan: " + data.sifre + " | Senin Yazdığın: " + girilenSifre);
+}
                 
                 // Yön Kontrolü
                 if (window.innerHeight > window.innerWidth) {
@@ -631,6 +635,7 @@ function oyunuHazirla() {
     </script>
 </body>
 </html>
+
 
 
 
