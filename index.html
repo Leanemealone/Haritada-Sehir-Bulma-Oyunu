@@ -386,41 +386,45 @@
             
             if (String(data.sifre).trim() === girilenSifre) {
                 aktifOgrenci = { id: secilenDocId, ...data }; 
-                
-                // --- GELİŞMİŞ YÖN KONTROLÜ BAŞLANGICI ---
-                const ekranYatayMi = () => {
-                    // Yöntem 1: Genişlik kontolü
-                    const boyutYatay = window.innerWidth > window.innerHeight;
-                    // Yöntem 2: Sensör açısı kontrolü (90 veya -90 derece yataydır)
-                    const aciYatay = Math.abs(window.orientation) === 90;
-                    return boyutYatay || aciYatay;
+
+                // --- EN HASSAS YÖN KONTROLÜ (YENİ NESİL) ---
+                const kontrolEtVeBaslat = () => {
+                    // Modern tarayıcılar için 'landscape' (yatay) kontrolü
+                    const isLandscape = screen.orientation ? screen.orientation.type.includes('landscape') : window.innerWidth > window.innerHeight;
+
+                    if (isLandscape) {
+                        // Eğer yataydaysa dinleyicileri kaldır ve başlat
+                        window.removeEventListener('resize', kontrolEtVeBaslat);
+                        if (screen.orientation) screen.orientation.removeEventListener('change', kontrolEtVeBaslat);
+                        
+                        document.getElementById('rotate-warning').style.display = 'none';
+                        oyunuGercektenBaslat();
+                    }
                 };
 
-                if (!ekranYatayMi()) {
+                // İlk kontrol: Zaten yatay mı?
+                const suAnYatayMi = screen.orientation ? screen.orientation.type.includes('landscape') : window.innerWidth > window.innerHeight;
+
+                if (!suAnYatayMi) {
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('rotate-warning').style.display = 'flex';
                     
-                    const baslatici = () => {
-                        if (ekranYatayMi()) {
-                            window.removeEventListener('resize', baslatici);
-                            window.removeEventListener('orientationchange', baslatici);
-                            // Ekstra güvenlik: 100ms sonra boyutlar tam otursun
-                            setTimeout(oyunuGercektenBaslat, 100);
-                        }
-                    };
-
-                    window.addEventListener('resize', baslatici);
-                    window.addEventListener('orientationchange', baslatici);
+                    // Hem boyut değişimini hem de modern yön değişimini dinle
+                    window.addEventListener('resize', kontrolEtVeBaslat);
+                    if (screen.orientation) {
+                        screen.orientation.addEventListener('change', kontrolEtVeBaslat);
+                    }
                 } else {
                     oyunuGercektenBaslat();
                 }
-                // --- GELİŞMİŞ YÖN KONTROLÜ BİTİŞİ ---
+                // -------------------------------------------
                 
             } else {
                 alert("Şifre yanlış!");
             }
         }
     } catch (e) {
+        console.error(e);
         alert("Bağlantı hatası!");
     }
 }
@@ -556,6 +560,7 @@
 </script>
 </body>
 </html>
+
 
 
 
