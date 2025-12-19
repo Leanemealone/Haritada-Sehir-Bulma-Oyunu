@@ -370,45 +370,59 @@
         }
 
         async function loginCheck() {
-            const secilenDocId = document.getElementById('student-select').value; 
-            const girilenSifre = document.getElementById('student-pass').value.trim();
+    const studentSelect = document.getElementById('student-select');
+    const secilenDocId = studentSelect.value; 
+    const girilenSifre = document.getElementById('student-pass').value.trim();
 
-            if (!secilenDocId) { alert("Lütfen adını seç!"); return; }
+    if (!secilenDocId) {
+        alert("Lütfen önce listeden adını seç!");
+        return;
+    }
 
-            try {
-                const doc = await db.collection("ogrenciler").doc(secilenDocId).get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    // Sizin yapınızda 'sifre' string bir alandır
-                    if (String(data.sifre) === girilenSifre) {
-                        aktifOgrenci = { id: secilenDocId, ...data }; 
-                        
-                        if (window.innerHeight > window.innerWidth) {
-    // Telefon dikeyse uyarıyı göster
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('rotate-warning').style.display = 'flex';
-    
-    // Hem 'resize' hem de 'orientationchange' olaylarını dinleyelim (Daha hızlı algılar)
-    const hızlıKontrol = () => {
-        // Tolerans ekledik: Genişlik, yükseklikten büyük olduğu an (1 piksel bile olsa) başlat
-        if (window.innerWidth > window.innerHeight) {
-            window.removeEventListener('resize', hızlıKontrol);
-            window.removeEventListener('orientationchange', hızlıKontrol);
-            oyunuGercektenBaslat();
-        }
-    };
+    try {
+        const doc = await db.collection("ogrenciler").doc(secilenDocId).get();
+        if (doc.exists) {
+            const data = doc.data();
+            
+            // Şifre Karşılaştırma
+            if (String(data.sifre).trim() === girilenSifre) {
+                // ŞİFRE DOĞRU
+                aktifOgrenci = { id: secilenDocId, ...data }; 
+                
+                // --- EKRAN YÖNÜ KONTROLÜ (HASSASLAŞTIRILMIŞ) ---
+                if (window.innerHeight > window.innerWidth) {
+                    // Telefon dikeyse uyarıyı göster
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('rotate-warning').style.display = 'flex';
+                    
+                    const hızlıKontrol = () => {
+                        // Genişlik yükseklikten büyük olduğu ilk an oyunu başlat
+                        if (window.innerWidth > window.innerHeight) {
+                            window.removeEventListener('resize', hızlıKontrol);
+                            window.removeEventListener('orientationchange', hızlıKontrol);
+                            oyunuGercektenBaslat();
+                        }
+                    };
 
-    window.addEventListener('resize', hızlıKontrol);
-    window.addEventListener('orientationchange', hızlıKontrol); // Bazı telefonlar bunu daha hızlı tetikler
-} else {
-    oyunuGercektenBaslat();
-}
-                            });
-                        } else { oyunuGercektenBaslat(); }
-                    } else { alert("Şifre yanlış!"); }
+                    window.addEventListener('resize', hızlıKontrol);
+                    window.addEventListener('orientationchange', hızlıKontrol);
+                } else {
+                    // Zaten yan tutuluyorsa direkt başlat
+                    oyunuGercektenBaslat();
                 }
-            } catch (e) { alert("Bağlantı hatası!"); }
+                // -----------------------------------------------
+                
+            } else {
+                alert("Şifre yanlış!");
+            }
+        } else {
+            alert("Öğrenci kaydı bulunamadı!");
         }
+    } catch (e) {
+        console.error("Hata:", e);
+        alert("Bağlantı hatası oluştu!");
+    }
+}
 
         function oyunuGercektenBaslat() {
             document.getElementById('login-screen').style.display = 'none';
@@ -541,6 +555,7 @@
 </script>
 </body>
 </html>
+
 
 
 
