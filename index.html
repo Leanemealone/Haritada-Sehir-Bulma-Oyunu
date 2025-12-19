@@ -369,7 +369,8 @@
 }
 
 async function loginCheck() {
-    const secilenDocId = document.getElementById('student-select').value; 
+    const studentSelect = document.getElementById('student-select');
+    const secilenDocId = studentSelect.value; 
     const girilenSifre = document.getElementById('student-pass').value.trim();
 
     if (!secilenDocId) {
@@ -382,17 +383,16 @@ async function loginCheck() {
         if (doc.exists) {
             const data = doc.data();
             
-            // Firebase'deki 'sifre' ile kutudaki şifreyi karşılaştırıyoruz
+            // Şifre Karşılaştırma (Tipi ne olursa olsun string olarak kontrol eder)
             const dbSifre = String(data.sifre).trim();
             const inputSifre = String(girilenSifre).trim();
 
             if (dbSifre === inputSifre) {
-                // ŞİFRE DOĞRU - GİRİŞ BAŞARILI
+                // ŞİFRE DOĞRU
                 aktifOgrenci = { id: secilenDocId, ...data }; 
                 
-                // Ekran Yönü Kontrolü
+                // Ekran Yönü Kontrolü (Dikeyse uyarı verir, yan ise başlatır)
                 if (window.innerHeight > window.innerWidth) {
-                    // Dikey tutuluyorsa uyarıyı göster
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('rotate-warning').style.display = 'flex';
                     
@@ -403,11 +403,10 @@ async function loginCheck() {
                         }
                     });
                 } else {
-                    // Zaten yan tutuluyorsa direkt başlat
                     oyunuGercektenBaslat();
                 }
             } else {
-                // Şifre yanlışsa bize neyi neyle karşılaştırdığını söylesin
+                // Şifre yanlışsa karşılaştırmayı gösteren hata ayıklayıcı
                 alert("Şifre Yanlış! \nSistemdeki: " + dbSifre + "\nSenin Yazdığın: " + inputSifre);
             }
         } else {
@@ -415,10 +414,11 @@ async function loginCheck() {
         }
     } catch (e) {
         console.error("Giriş Hatası:", e);
-        alert("Bağlantı sorunu yaşandı!");
+        alert("Bağlantı sorunu! Tarayıcı ayarlarından Firebase izinlerini kontrol edin.");
     }
 }
 
+// 2. OYUN ALANINA GEÇİŞ
 function oyunuGercektenBaslat() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('rotate-warning').style.display = 'none';
@@ -426,6 +426,8 @@ function oyunuGercektenBaslat() {
     document.getElementById('fullscreen-btn').style.display = 'block';
     oyunuHazirla();
 }
+
+// 3. OYUN HAZIRLIKLARI (Şehirleri Boyama ve Labellar)
 function oyunuHazirla() {
     const sehirGruplari = document.querySelectorAll('#sehir-grubu g[data-iladi]');
     const labelsGroup = document.getElementById('labels-grubu');
@@ -439,10 +441,8 @@ function oyunuHazirla() {
         if (ilAdi && paths.length > 0) {
             if(!sehirListesi.includes(ilAdi)) sehirListesi.push(ilAdi);
 
-            // 1. Renk Seçimi
             const rastgeleRenk = sehirRenkleri[Math.floor(Math.random() * sehirRenkleri.length)];
             
-            // 2. Şehir Boyama ve Tıklama (Döngü burada başlar ve biter)
             paths.forEach(p => {
                 p.id = ilAdi;
                 p.style.fill = rastgeleRenk; 
@@ -450,9 +450,9 @@ function oyunuHazirla() {
                     e.stopPropagation();
                     sehirTiklandi(p);
                 });
-            }); // <-- Eksik olan kapatma buradaydı!
+            });
 
-            // 3. İsim Yerleşimi ve Balıkesir Ayarı (Sadece 1 kez olmalı)
+            // Label Yerleşimi
             const anaPath = paths[0]; 
             const bbox = anaPath.getBBox();
             let x = bbox.x + bbox.width / 2; 
@@ -471,12 +471,12 @@ function oyunuHazirla() {
             text.textContent = ilAdi;
             labelsGroup.appendChild(text);
         }
-    }); // <-- Şehir grupları döngüsü burada biter
+    });
 
-    // 4. Oyun Başlangıç Ayarları
     sorulacakSehirler = [...sehirListesi]; 
     yeniSehirSor();
     
+    // Süre Başlatma
     const sayac = setInterval(() => { 
         sure--; 
         document.getElementById('timer').innerText = sure; 
@@ -487,76 +487,64 @@ function oyunuHazirla() {
     }, 1000);
 }
 
-        function yeniSehirSor() { 
-    // Eğer sorulacak şehir kalmadıysa veya oyun yeni başlıyorsa listeyi yenile
+// 4. ŞEHİR SORMA VE TIKLAMA MANTIĞI
+function yeniSehirSor() { 
     if (sorulacakSehirler.length === 0) {
-        sorulacakSehirler = [...sehirListesi]; // Tüm şehirleri kopyala
+        sorulacakSehirler = [...sehirListesi];
     }
-    
-    // Listeden rastgele bir şehir seç
     const rastgeleIndeks = Math.floor(Math.random() * sorulacakSehirler.length);
     sorulanSehir = sorulacakSehirler[rastgeleIndeks];
-    
-    // SEÇİLEN ŞEHRİ LİSTEDEN SİL (Bir daha çıkmaması için)
     sorulacakSehirler.splice(rastgeleIndeks, 1);
     
-    // Türkçe karakter uyumlu büyük harf yap ve ekrana yaz
     const turkceBuyuk = sorulanSehir.toLocaleUpperCase('tr-TR');
     document.getElementById('target-city').innerText = turkceBuyuk;
-
-    console.log("Kalan şehir sayısı: " + sorulacakSehirler.length); // Kontrol için
 }
 
-        function sehirTiklandi(el) {
-            const fb = document.getElementById('feedback');
-            const successSnd = document.getElementById('snd-success');
-            const errorSnd = document.getElementById('snd-error');
+function sehirTiklandi(el) {
+    const fb = document.getElementById('feedback');
+    const successSnd = document.getElementById('snd-success');
+    const errorSnd = document.getElementById('snd-error');
 
-            if (el.id === sorulanSehir) {
-                puan += 10; 
-                document.getElementById('score').innerText = puan;
-                fb.innerText = "Aferin, doğru cevapladın! ✅"; 
-                fb.style.color = "green";
+    if (el.id === sorulanSehir) {
+        puan += 10; 
+        document.getElementById('score').innerText = puan;
+        fb.innerText = "Aferin, doğru cevapladın! ✅"; 
+        fb.style.color = "green";
 
-                confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#ffeb3b', '#4caf50', '#2196f3', '#ff5722']
-        });
-                
-                successSnd.play().catch(()=>{}); 
-                
-                el.classList.add('dogru');
-                setTimeout(() => { 
-                    el.classList.remove('dogru'); 
-                    fb.innerText = ""; 
-                    yeniSehirSor(); 
-                }, 800);
-            } else {
-                fb.innerText = "Üzgünüm, tekrar dene! ❌"; 
-                fb.style.color = "red";
-                
-                errorSnd.play().catch(()=>{}); 
-                
-                el.classList.add('yanlis');
-                setTimeout(() => { 
-                    el.classList.remove('yanlis'); 
-                    fb.innerText = ""; 
-                }, 500);
-            }
-        }
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        successSnd.play().catch(()=>{}); 
+        
+        el.classList.add('dogru');
+        setTimeout(() => { 
+            el.classList.remove('dogru'); 
+            fb.innerText = ""; 
+            yeniSehirSor(); 
+        }, 800);
+    } else {
+        fb.innerText = "Üzgünüm, tekrar dene! ❌"; 
+        fb.style.color = "red";
+        errorSnd.play().catch(()=>{}); 
+        
+        el.classList.add('yanlis');
+        setTimeout(() => { 
+            el.classList.remove('yanlis'); 
+            fb.innerText = ""; 
+        }, 500);
+    }
+}
 
-        function oyunBitti() {
-            db.collection("ogrenciler").doc(aktifOgrenci.id).update({ 
-                puan: Math.max(puan, aktifOgrenci.puan || 0) 
-            }).then(() => { 
-                alert("Süre bitti! Puanın: " + puan); 
-                location.reload(); 
-            });
-        }
-        window.onload = skorlariYukle;
-    </script>
+// 5. OYUN SONU VE KAYIT
+function oyunBitti() {
+    db.collection("ogrenciler").doc(aktifOgrenci.id).update({ 
+        puan: Math.max(puan, aktifOgrenci.puan || 0) 
+    }).then(() => { 
+        alert("Süre bitti! Puanın: " + puan); 
+        location.reload(); 
+    });
+}
+
+window.onload = skorlariYukle;
+</script>
 </body>
 </html>
 
