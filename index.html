@@ -349,7 +349,7 @@
                 const studentSelect = document.getElementById('student-select');
                 
                 // Liderlik Tablosu: 'puan' (number) alanına göre sıralar, 'isim' (string) alanını gösterir
-                const skorSnapshot = await db.collection("ogrenciler").orderBy("puan", "desc").limit(37).get();
+                const skorSnapshot = await db.collection("ogrenciler").where("puan", ">", 0).orderBy("puan", "desc").limit(37).get();
                 lbList.innerHTML = "";
                 skorSnapshot.forEach(doc => { 
                     const d = doc.data(); 
@@ -560,6 +560,7 @@
 </script>
 </body>
 </html>
+
 
 
 
